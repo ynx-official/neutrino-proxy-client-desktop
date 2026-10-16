@@ -31,7 +31,7 @@ void main() {
     // Exercise the actual transport directly so CI reports the TLS exception
     // instead of only timing out while waiting for a later engine state.
     final clientContext = SecurityContext(withTrustedRoots: false)
-      ..setTrustedCertificates('test/fixtures/tls/server.pem');
+      ..setTrustedCertificates('test/fixtures/tls/ca.pem');
     final socket = await scope.dial(
       'localhost',
       server.port,
@@ -78,7 +78,7 @@ void main() {
           ClientConfig(
             server: hostname,
             port: server.port,
-            certificatePath: 'test/fixtures/tls/server.pem',
+            certificatePath: 'test/fixtures/tls/ca.pem',
           ),
           const Secrets(license: 'test-license'),
         );

@@ -47,6 +47,8 @@ jobs:
           cache: true
       - name: Resolve locked dependencies
         run: flutter pub get --enforce-lockfile
+      - name: Generate fresh local TLS test certificates
+        run: python scripts/generate-test-certificates.py
       - name: Format, analyze and test
         run: |
           dart format --output=none --set-exit-if-changed lib test

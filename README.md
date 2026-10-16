@@ -60,6 +60,7 @@ flutter run -d windows
 ```sh
 dart format --output=none --set-exit-if-changed lib test
 flutter analyze --no-pub
+python scripts/generate-test-certificates.py
 flutter test --no-pub --reporter expanded
 python -m unittest discover -s scripts/tests -v
 flutter build windows --release --no-pub
@@ -102,4 +103,4 @@ docs/             需求、架构、验证和发布说明
 
 ## 许可证与来源
 
-采用 [MIT License](LICENSE)。保留本仓库与 Neutrino Proxy 上游的版权声明。项目标识及内置公开信任库来自 Neutrino Proxy；`test/fixtures/tls/` 中的证书与私钥仅用于本机测试，不是应用凭证，且不打入分发包。
+采用 [MIT License](LICENSE)。保留本仓库与 Neutrino Proxy 上游的版权声明。项目标识及内置公开信任库来自 Neutrino Proxy；`test/fixtures/tls/` 中的证书与私钥仅用于本机测试，不是应用凭证，且不打入分发包。测试前使用上面的脚本刷新测试证书，需要 OpenSSL（Git for Windows 已附带）；CI 自动生成，避免证书到期导致误报，详情见 [TLS 测试证书](docs/04-quality/tls-fixtures.md)。
