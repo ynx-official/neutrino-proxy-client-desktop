@@ -1,11 +1,12 @@
 import 'dart:async';
-import 'dart:convert';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../core/config.dart';
 import 'engine_bridge.dart';
 import 'storage.dart';
+import '../background/backend.dart';
+import '../background/service.dart';
 
 const stateLabels = {
   'idle': '尚未连接',
@@ -73,47 +74,39 @@ final appProvider = NotifierProvider<AppController, AppState>(
 );
 
 class AppController extends Notifier<AppState> {
-  AppController({required this.store, required this.engine});
-  final ConfigStore store;
-  final EnginePort engine;
-  Secrets _secrets = const Secrets();
-  bool _credentialsPending = false;
+  AppController({
+    ConfigStore? store,
+    EnginePort? engine,
+    ClientBackend? backend,
+  }) : backend = backend ?? ClientService(store: store!, engine: engine);
+  final ClientBackend backend;
   @override
   AppState build() {
-    final subscription = engine.events.listen((event) {
-      if ((event['revision'] as int? ?? 0) <
-          (state.engine['revision'] as int? ?? 0)) {
-        return;
-      }
-      final phase = event['state'];
-      if (phase == 'idle') {
-        _credentialsPending = false;
-      }
-      final active = event['activeConfig'];
-      final pending =
-          phase != 'idle' &&
-          (_credentialsPending ||
-              active != null &&
-                  jsonEncode(active) != jsonEncode(state.config.toJson()));
-      state = state.copy(engine: event, pending: pending);
-    });
+    final subscription = backend.events.listen(_apply);
     ref.onDispose(subscription.cancel);
     return AppState(config: ClientConfig());
   }
 
+  void _apply(Map<String, dynamic> value) {
+    state = state.copy(
+      config: value['config'] is Map
+          ? ClientConfig.fromJson(value['config'] as Map)
+          : null,
+      hasLicense: value['hasLicense'] as bool? ?? false,
+      hint: value['hint'] as String? ?? '尚未设置',
+      engine: Map<String, dynamic>.from(value['engine'] as Map? ?? {}),
+      ready: value['ready'] == true,
+      pending: value['pending'] == true,
+      error: value['error'] as String? ?? '',
+    );
+  }
+
   Future<void> initialize() async {
     try {
-      final saved = await store.load();
-      _secrets = saved.secrets;
-      state = state.copy(
-        config: saved.config,
-        hasLicense: _secrets.license.isNotEmpty,
-        hint: _secrets.hint,
-        ready: true,
-        error: '',
-      );
+      await backend.initialize();
+      _apply(backend.snapshot);
     } catch (_) {
-      state = state.copy(error: '无法读取配置或系统凭证。请检查文件权限与安全存储后重试。');
+      state = state.copy(error: '无法连接后台内核，请检查安装包或重新打开应用。');
     }
   }
 
@@ -141,45 +134,19 @@ class AppController extends Notifier<AppState> {
     }
   }
 
-  Future<bool> connect() => _run(() async {
-    _credentialsPending = false;
-    await engine.connect(state.config, _secrets);
-  });
-  Future<bool> disconnect() => _run(engine.disconnect);
+  Future<bool> connect() => _run(backend.connect);
+  Future<bool> disconnect() => _run(backend.disconnect);
   Future<bool> save(
     ClientConfig config, {
     String? license,
     String? password,
     bool reconnect = false,
-  }) => _run(() async {
-    final next = Secrets(
-      license: license ?? _secrets.license,
-      storePassword: password ?? _secrets.storePassword,
-    );
-    final errors = config.validate(hasLicense: next.license.isNotEmpty);
-    if (errors.isNotEmpty) {
-      throw FormatException(errors.values.join('；'));
-    }
-    final saved = await store.save(config, next);
-    _credentialsPending =
-        state.active &&
-        (_credentialsPending ||
-            next.license != _secrets.license ||
-            next.storePassword != _secrets.storePassword);
-    _secrets = next;
-    state = state.copy(
-      config: saved,
-      hasLicense: next.license.isNotEmpty,
-      hint: next.hint,
-      pending:
-          state.active &&
-          (_credentialsPending ||
-              jsonEncode(saved.toJson()) !=
-                  jsonEncode(state.displayedConfig.toJson())),
-    );
-    if (reconnect) {
-      _credentialsPending = false;
-      await engine.connect(saved, next);
-    }
-  });
+  }) => _run(
+    () => backend.save(
+      config,
+      license: license,
+      password: password,
+      reconnect: reconnect,
+    ),
+  );
 }

@@ -16,10 +16,34 @@ class ConnectionScope {
   final sockets = <Socket>{};
   final pending = <ConnectionTask<Socket>>{};
   final cleanups = <void Function()>[];
-  Future<T> wait<T>(Future<T> operation) => Future.any([
-    operation,
-    done.future.then<T>((_) => throw const Cancelled()),
-  ]);
+  final _operations = <void Function()>{};
+  int get pendingOperationCount => _operations.length;
+  Future<T> wait<T>(Future<T> operation) {
+    final result = Completer<T>();
+    void cancel() {
+      if (!result.isCompleted) result.completeError(const Cancelled());
+    }
+
+    if (closed) {
+      cancel();
+    } else {
+      _operations.add(cancel);
+    }
+    // Future.any with done.future retains one listener for every completed UDP
+    // lookup until disconnect. Remove each cancellation registration as soon as
+    // its operation settles; still observe late failures after cancellation.
+    operation.then<void>(
+      (value) {
+        _operations.remove(cancel);
+        if (!result.isCompleted) result.complete(value);
+      },
+      onError: (Object error, StackTrace stack) {
+        _operations.remove(cancel);
+        if (!result.isCompleted) result.completeError(error, stack);
+      },
+    );
+    return result.future;
+  }
 
   Future<Socket> dial(
     String host,
@@ -96,6 +120,10 @@ class ConnectionScope {
       return;
     }
     closed = true;
+    for (final cancel in _operations.toList()) {
+      cancel();
+    }
+    _operations.clear();
     // Socket destruction can synchronously resume a forwarding task, whose
     // finally block releases its socket. Iterate snapshots during teardown.
     for (final task in pending.toList()) {

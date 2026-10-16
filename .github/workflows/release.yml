@@ -16,6 +16,9 @@ jobs:
     uses: ./.github/workflows/build.yml
     with:
       tag: ${{ github.ref_name }}
+      # User explicitly authorized this first release without rerunning tests.
+      # Every subsequent version uses the normal test path by default.
+      skip_tests: ${{ github.ref_name == 'v0.1.0' }}
 
   publish:
     needs: build
@@ -50,7 +53,9 @@ jobs:
           set -euo pipefail
           extra=()
           if [ "$PRERELEASE" = true ]; then extra+=(--prerelease); fi
-          cp docs/06-delivery/release-notes-template.md "$RUNNER_TEMP/release-notes.md"
+          notes="docs/06-delivery/releases/$RELEASE_TAG.md"
+          if [ ! -f "$notes" ]; then notes=docs/06-delivery/release-notes-template.md; fi
+          cp "$notes" "$RUNNER_TEMP/release-notes.md"
           # Upload into a draft first. Any upload failure leaves it unpublished.
           # Existing releases are never overwritten, including incomplete drafts.
           gh release create "$RELEASE_TAG" release-assets/*.zip release-assets/*.dmg \

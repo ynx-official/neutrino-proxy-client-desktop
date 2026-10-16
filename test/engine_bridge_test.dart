@@ -7,7 +7,7 @@ import 'package:neutrino_proxy_client_desktop/core/protocol.dart';
 
 void main() {
   test(
-    'production isolate reports authentication and acknowledges shutdown',
+    'legacy isolate reports authentication and acknowledges shutdown',
     () async {
       final server = await ServerSocket.bind(InternetAddress.loopbackIPv4, 0);
       final sockets = <Socket>[];

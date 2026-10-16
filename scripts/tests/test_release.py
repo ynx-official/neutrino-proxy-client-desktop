@@ -15,6 +15,19 @@ spec.loader.exec_module(release)
 
 
 class ReleaseTests(unittest.TestCase):
+    def test_background_binaries_are_required_for_windows_release(self):
+        for missing in ('neutrino_proxy_host.exe', 'neutrino_worker.exe'):
+            with self.subTest(missing=missing), tempfile.TemporaryDirectory() as temp:
+                root = Path(temp)
+                source = root / 'bundle'
+                for name in release.WINDOWS_REQUIRED:
+                    path = source / name
+                    path.parent.mkdir(parents=True, exist_ok=True)
+                    path.write_bytes(b'fixture')
+                (source / missing).unlink(missing_ok=True)
+                with self.assertRaises(ValueError):
+                    release.package_windows(source, root / 'out', 'v0.1.0')
+
     def test_tag_version_and_prerelease(self):
         self.assertEqual(release.parse_tag("v1.2.3"), ("1.2.3", False))
         self.assertEqual(release.parse_tag("v1.2.3-rc.1"), ("1.2.3", True))

@@ -22,11 +22,11 @@ UDP 控制 type=8，info 为 UdpBaseInfo。新隧道发送 type=8，info 包含 
 
 ## 模块与并发
 
-以下描述当前单进程实现。2026-10-16 用户要求规划独立网络内核与可退出界面，新方案见[后台独立进程架构提案](background-process-design.md)；提案尚未实施，不改变本文的协议依据。
+2026-10-16 已按用户批准的 Flutter + Dart 路线拆分进程，生命周期、IPC、凭证和构建边界以[后台独立进程架构](background-process-design.md)为准。本文继续作为网络协议权威说明。
 
-`lib/core/` 不依赖 Flutter。一个 isolate 持有唯一 engine；UI 通过消息端口发送 connect/disconnect，接收 revision 状态和脱敏日志。每代连接拥有取消标记、socket 集合和定时器，迟到的 DNS/握手结果必须关闭，不得恢复被取消的连接。TCP 写入等待 flush 并暂停上游读取，防止无限缓存；日志最多 500 条，每条有长度限制。
+`lib/core/` 不依赖 Flutter。独立 Dart AOT worker 持有唯一 engine；UI 通过宿主的私有管道发送命令，接收状态和脱敏日志。每代连接拥有取消标记、socket 集合和定时器，迟到的 DNS/握手结果必须关闭，不得恢复被取消的连接。TCP 写入等待 flush 并暂停上游读取，防止无限缓存；日志最多 500 条，每条有长度限制。
 
-`lib/application/` 管理配置持久化、命令串行化和 Riverpod 状态；`lib/ui/` 只处理表单和显示；`lib/platform/` 管理窗口、托盘和系统存储。普通配置和凭证独立保存，配置写入失败不能删除仍被引用的凭证。客户端身份首次生成后保持不变。
+`lib/background/` 管理进程协议、命令串行化与后台服务；`lib/application/` 保留配置事务和 Riverpod 投影；`lib/ui/` 处理表单和显示；`lib/platform/` 管理窗口。托盘及系统凭证移至 `native/` 宿主。普通配置和凭证独立保存，配置写入失败不能删除仍被引用的凭证。客户端身份首次生成后保持不变。
 
 ## TLS 和导入
 

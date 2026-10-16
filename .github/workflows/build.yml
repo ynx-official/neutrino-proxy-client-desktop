@@ -6,12 +6,56 @@ on:
       tag:
         type: string
         default: ''
+      skip_tests:
+        description: Explicitly authorized release without test execution
+        type: boolean
+        default: false
 
 permissions:
   contents: read
 
 jobs:
+  macos-worker:
+    name: Dart worker (${{ matrix.arch }})
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: macos-15-intel
+            arch: x64
+          - os: macos-15
+            arch: arm64
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.47.5'
+          channel: stable
+          cache: true
+      - name: Compile architecture-specific pure Dart worker
+        working-directory: services/proxy_worker
+        run: |
+          dart pub get --enforce-lockfile
+          dart compile exe bin/main.dart -o neutrino_worker_${{ matrix.arch }}
+      - name: Analyze worker
+        if: ${{ !inputs.skip_tests }}
+        working-directory: services/proxy_worker
+        run: dart analyze
+      - name: Verify native worker protocol
+        if: ${{ !inputs.skip_tests }}
+        run: python3 scripts/verify-worker.py --worker services/proxy_worker/neutrino_worker_${{ matrix.arch }}
+      - uses: actions/upload-artifact@v4
+        with:
+          name: macos-worker-${{ matrix.arch }}
+          path: services/proxy_worker/neutrino_worker_${{ matrix.arch }}
+          if-no-files-found: error
+          retention-days: 7
   desktop:
+    needs: macos-worker
     name: ${{ matrix.platform }}
     strategy:
       fail-fast: false
@@ -39,15 +83,17 @@ jobs:
           RELEASE_TAG: ${{ inputs.tag }}
         run: python scripts/release.py metadata --tag "$RELEASE_TAG" --build-number "$GITHUB_RUN_NUMBER" --github-output "$GITHUB_OUTPUT"
       - name: Test release safeguards
+        if: ${{ !inputs.skip_tests }}
         run: python -m unittest discover -s scripts/tests -v
       - name: Select OpenSSL 3 on macOS
-        if: runner.os == 'macOS'
+        if: ${{ runner.os == 'macOS' && !inputs.skip_tests }}
         run: |
           if ! brew list --versions openssl@3 >/dev/null 2>&1; then
             brew install openssl@3
           fi
           echo "OPENSSL=$(brew --prefix openssl@3)/bin/openssl" >> "$GITHUB_ENV"
       - name: Generate fresh local TLS test certificates
+        if: ${{ !inputs.skip_tests }}
         run: python scripts/generate-test-certificates.py
       - uses: subosito/flutter-action@v2
         with:
@@ -57,6 +103,7 @@ jobs:
       - name: Resolve locked dependencies
         run: flutter pub get --enforce-lockfile
       - name: Format, analyze and test
+        if: ${{ !inputs.skip_tests }}
         run: |
           dart format --output=none --set-exit-if-changed lib test
           flutter analyze --no-pub
@@ -70,6 +117,20 @@ jobs:
         if: runner.os == 'Windows'
         shell: pwsh
         run: ./scripts/copy-windows-runtime.ps1
+      - name: Verify worker IPC and parent-exit cleanup
+        if: ${{ runner.os == 'Windows' && !inputs.skip_tests }}
+        run: |
+          python scripts/verify-worker.py --worker build/windows/x64/runner/Release/neutrino_worker.exe
+          cmake --build build/windows/x64 --config Release --target neutrino_vault_test neutrino_tray_test
+          build/windows/x64/native_host/Release/neutrino_vault_test.exe
+          build/windows/x64/native_host/Release/neutrino_tray_test.exe
+          python scripts/verify-host-faults.py --bundle build/windows/x64/runner/Release
+      - uses: actions/download-artifact@v4
+        if: runner.os == 'macOS'
+        with:
+          pattern: macos-worker-*
+          path: build/macos-workers
+          merge-multiple: true
       - name: Build universal macOS app with ad-hoc signing
         if: runner.os == 'macOS'
         env:
@@ -80,6 +141,7 @@ jobs:
         run: |
           flutter config --no-enable-macos-arm64-only
           flutter build macos --release --no-pub --build-name "$APP_VERSION" --build-number "$GITHUB_RUN_NUMBER"
+          bash scripts/build-macos-host.sh
       - name: Package and record artifacts
         env:
           RELEASE_TAG: ${{ steps.metadata.outputs.tag }}

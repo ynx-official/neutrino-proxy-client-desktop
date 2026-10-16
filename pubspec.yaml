@@ -11,9 +11,6 @@ dependencies:
     sdk: flutter
   flutter_riverpod: 3.4.3
   window_manager: 0.5.2
-  tray_manager: 0.5.3
-  flutter_secure_storage: 11.2.0
-  path_provider: 2.1.6
   file_selector: 1.1.0
   crypto: 3.0.7
   yaml: 3.1.4

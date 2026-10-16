@@ -11,6 +11,7 @@ coverage/
 .env.*
 !.env.example
 release-assets/
+services/proxy_worker/neutrino_worker_*
 __pycache__/
 *.pyc
 macos/Flutter/ephemeral/

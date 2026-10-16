@@ -10,6 +10,8 @@
 
 本仓库只打包桌面应用，不打包 Java 服务端或命令行客户端。应用无商业签名证书或 Apple 公证，macOS 沿用工程现有 ad-hoc 签名。打包设计与平台原生验证状态分别记录，不用工作流配置代替成功运行证据。
 
+2026-10-16 用户进一步明确授权“正式发版，跳过测试”，本次版本为 `v0.1.0`。此授权包括提交当前 Flutter 客户端改造、推送 main 和创建发布 tag。此次 tag 构建以 `skip_tests: true` 跳过测试、分析与测试证书生成，仍保留正常编译、原生签名、包结构和哈希校验。该例外仅绑定 `v0.1.0`，后续版本默认运行测试。main 推送携带 `[skip tests]` 时也可显式跳过该次 CI 测试，PR 与其他提交仍按默认流程运行；发布 tag 的测试策略由 release 工作流单独决定。版本专属说明优先读取 `docs/06-delivery/releases/<tag>.md`，无专属说明时使用模板。
+
 ## 工作流
 
 | 文件 | 触发 | 职责 |
@@ -18,7 +20,9 @@
 | `.github/workflows/build.yml` | workflow_call | 固定 Flutter 3.47.5，锁定依赖，格式/analyze/test，Windows/macOS 构建与校验 |
 | `.github/workflows/release.yml` | 推送 `v*` tag | 等待两端通过，验证所有产物，生成校验清单，创建草稿并上传后自动公开 |
 
-Windows 使用 `windows-2022`；macOS 使用 `macos-15`，显式关闭仅 arm64 构建，并检查每个 Mach-O 文件包含 `x86_64` 和 `arm64`。macOS 运行 `codesign --verify --deep --strict`、ZIP 校验和 `hdiutil verify`。CI 构建不需要同级 Java 仓库存在。
+Windows 使用 `windows-2022`；macOS 的 Dart worker 分别使用 `macos-15-intel` 和 `macos-15` 原生编译。桌面构建收集两个 worker，Flutter 和 Swift 宿主仍构建通用版。打包检查这两个 worker 各自架构，其余 Mach-O 必须包含 `x86_64` 和 `arm64`；不能直接 lipo 合并 Dart AOT 文件。macOS 组装后运行 `codesign --verify --deep --strict`、ZIP 校验和 `hdiutil verify`。CI 构建不需要同级 Java 仓库存在。
+
+2026-10-16 后台进程改造同步更新了此构建链；先前成功的单进程 CI 不能作为新架构通过证据。默认 Windows 校验新增 worker 真进程、DPAPI、托盘状态和崩溃清理测试；发布完整性检查要求宿主、worker、UI 三个 EXE 及第三方许可。首次正式发布的测试跳过范围见上述授权记录。
 
 构建作业仅有 `contents: read`；发布作业单独获得 `contents: write`，使用当次运行的 `GITHUB_TOKEN`。不需要额外 Secrets，不在 PR 中使用写权限令牌，不自动创建 tag。
 

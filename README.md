@@ -17,7 +17,7 @@ Neutrino Proxy 的 Windows / macOS 桌面客户端。使用 Flutter + Dart，内
 - 导入 Java 客户端 YAML/JSON 配置，先预览差异，再应用；原文件保持不变。
 - 支持内置信任证书、自定义 JKS / PEM / DER；校验证书链、主机名与有效期。
 - License 与证书口令保存到系统安全存储，普通配置与凭证分离。
-- 连接、日志、设置三页；关闭主窗口后留在托盘，从托盘恢复或退出。
+- 连接、日志、设置三页；关闭主窗口时真正结束 Flutter 界面，独立 Dart 内核保持连接，从原生托盘恢复或退出。普通最小化仍保留界面。
 - 日志有条数上限，并对凭证及敏感内容进行脱敏。
 
 ## 下载与使用
@@ -51,8 +51,9 @@ Windows 包未配置商业代码签名；macOS 使用无需证书的 ad-hoc 签�
 git clone https://github.com/ynx-official/neutrino-proxy-client-desktop.git
 cd neutrino-proxy-client-desktop
 flutter pub get --enforce-lockfile
-flutter run -d windows
-# macOS: flutter run -d macos
+flutter build windows --release --no-pub
+# 启动 build/windows/x64/runner/Release/neutrino_proxy_client_desktop.exe
+# macOS 构建见下文，需额外组装宿主。
 ```
 
 若使用项目本地 SDK，可将 `flutter` 替换成 `.tools/flutter/bin/flutter.bat`；`.tools/` 不入库。Windows 未启用符号链接支持时，可以在获取依赖后执行 `pwsh -File scripts/prepare-windows-links.ps1` 创建项目内插件目录联接。
@@ -64,10 +65,24 @@ python scripts/generate-test-certificates.py
 flutter test --no-pub --reporter expanded
 python -m unittest discover -s scripts/tests -v
 flutter build windows --release --no-pub
-# macOS: flutter build macos --release --no-pub
+# macOS:
+# flutter build macos --release --no-pub
+# bash scripts/build-macos-host.sh
 ```
 
 构建结果位于 `build/windows/x64/runner/Release/` 或 `build/macos/Build/Products/Release/Neutrino.app`。Windows 运行包必须包含整个 Release 目录，不能只复制 EXE；对外分发前运行 `pwsh -File scripts/copy-windows-runtime.ps1` 补齐 Visual C++ 运行库，CI 会自动完成。
+
+Windows 构建会自动编译原生宿主和独立 Dart worker。当前宿主通信入口按 Release 验证；不再将 `flutter run` 作为完整应用启动方式，UI 开发先使用 widget tests。macOS 组装脚本在本机只编译当前架构 worker；通用发布包需要 CI 两个原生架构的 worker。新 macOS 宿主尚未实机验收，不能沿用旧单进程版本的 CI 结论。
+
+无弹窗的 Windows 本地验收：
+
+```sh
+python scripts/verify-worker.py --worker build/windows/x64/runner/Release/neutrino_worker.exe
+python scripts/verify-host-faults.py --bundle build/windows/x64/runner/Release
+python scripts/verify-background.py --cycles 0 --samples 60
+```
+
+这些脚本只使用临时合成配置和本地测试对端，不读取真实 License。`--cycles` 大于 0 会反复打开/关闭真实窗口，执行前应告知使用者。资源口径、结果和未完成的长期检查见[后台重构验证](docs/04-quality/background-process-verification.md)。
 
 ## 自动打包与发布
 
@@ -89,10 +104,13 @@ git push origin v0.1.0
 
 ```text
 lib/core/          纯 Dart 协议、证书解析与 TCP/UDP 引擎
-lib/application/   isolate 通信、配置持久化和状态管理
-lib/platform/      窗口、托盘和系统凭证存储
+lib/application/   配置事务和 Riverpod 状态投影
+lib/background/    有界 IPC、后台服务和 UI 客户端
+services/          独立纯 Dart AOT worker
+native/            Windows/macOS 托盘、进程与系统安全存储
+lib/platform/      Flutter 窗口生命周期
 lib/ui/            连接、日志和设置页面
-windows/ macos/    原生桌面宿主
+windows/ macos/    Flutter runner 和平台构建集成
 test/             协议、真实本地 socket、存储和界面测试
 scripts/          打包、发布校验及测试
 .github/workflows/ CI 与 tag 发布工作流

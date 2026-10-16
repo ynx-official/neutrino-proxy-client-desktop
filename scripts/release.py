@@ -11,12 +11,13 @@ import zipfile
 PREFIX = "neutrino-proxy-client-desktop"
 WINDOWS_REQUIRED = (
     "neutrino_proxy_client_desktop.exe",
+    "neutrino_proxy_host.exe",
+    "neutrino_worker.exe",
+    "THIRD-PARTY-NOTICES.txt",
     "flutter_windows.dll",
     "msvcp140.dll",
     "vcruntime140.dll",
     "vcruntime140_1.dll",
-    "flutter_secure_storage_windows_plugin.dll",
-    "tray_manager_plugin.dll",
     "window_manager_plugin.dll",
     "data/icudtl.dat",
     "data/app.so",

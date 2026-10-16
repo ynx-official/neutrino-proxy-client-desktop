@@ -51,6 +51,29 @@ add_subdirectory(${FLUTTER_MANAGED_DIR})
 
 # Application build; see runner/CMakeLists.txt.
 add_subdirectory("runner")
+add_subdirectory("../native/host_windows" "native_host")
+
+# Compile the pure-Dart service with its own dependency graph: Flutter plugins
+# must never enter this executable or its background memory footprint.
+set(WORKER_ROOT "${CMAKE_CURRENT_SOURCE_DIR}/../services/proxy_worker")
+function(resolve_worker_sdk)
+  include("${FLUTTER_MANAGED_DIR}/ephemeral/generated_config.cmake")
+  set(DART_EXE "${FLUTTER_ROOT}/bin/cache/dart-sdk/bin/dart.exe" PARENT_SCOPE)
+endfunction()
+resolve_worker_sdk()
+file(GLOB_RECURSE WORKER_SOURCES CONFIGURE_DEPENDS
+  "${CMAKE_CURRENT_SOURCE_DIR}/../lib/core/*.dart"
+  "${CMAKE_CURRENT_SOURCE_DIR}/../lib/background/*.dart"
+  "${CMAKE_CURRENT_SOURCE_DIR}/../lib/application/*.dart")
+add_custom_command(OUTPUT "${CMAKE_BINARY_DIR}/neutrino_worker.exe"
+  COMMAND "${DART_EXE}" pub get --enforce-lockfile
+  COMMAND "${DART_EXE}" compile exe bin/main.dart -o "${CMAKE_BINARY_DIR}/neutrino_worker.exe"
+  WORKING_DIRECTORY "${WORKER_ROOT}"
+  DEPENDS ${WORKER_SOURCES} "${WORKER_ROOT}/bin/main.dart"
+          "${WORKER_ROOT}/pubspec.yaml" "${WORKER_ROOT}/pubspec.lock"
+  VERBATIM)
+add_custom_target(neutrino_worker ALL DEPENDS "${CMAKE_BINARY_DIR}/neutrino_worker.exe")
+add_dependencies(${BINARY_NAME} neutrino_host neutrino_worker)
 
 
 # Generated plugin build rules, which manage building the plugins and adding
@@ -74,6 +97,10 @@ set(INSTALL_BUNDLE_LIB_DIR "${CMAKE_INSTALL_PREFIX}")
 
 install(TARGETS ${BINARY_NAME} RUNTIME DESTINATION "${CMAKE_INSTALL_PREFIX}"
   COMPONENT Runtime)
+install(TARGETS neutrino_host RUNTIME DESTINATION "${CMAKE_INSTALL_PREFIX}" COMPONENT Runtime)
+install(FILES "${CMAKE_BINARY_DIR}/neutrino_worker.exe" DESTINATION "${CMAKE_INSTALL_PREFIX}" COMPONENT Runtime)
+install(FILES "${CMAKE_CURRENT_SOURCE_DIR}/../native/third_party/nlohmann/LICENSE.MIT"
+  DESTINATION "${CMAKE_INSTALL_PREFIX}" RENAME "THIRD-PARTY-NOTICES.txt" COMPONENT Runtime)
 
 install(FILES "${FLUTTER_ICU_DATA_FILE}" DESTINATION "${INSTALL_BUNDLE_DATA_DIR}"
   COMPONENT Runtime)
