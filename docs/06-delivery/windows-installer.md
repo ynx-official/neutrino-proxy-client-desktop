@@ -16,7 +16,11 @@
 
 ## 构建
 
+GitHub Actions 自动构建：`main` 推送、PR、手动 CI 和 `v*` tag 发布共用 `.github/workflows/build.yml`。Windows 作业在 Flutter 编译、运行库补齐后调用打包脚本；安装包生成失败或产物缺失会使作业失败。成功后从运行页面 **Artifacts → `windows-x64-installer`** 下载，解压 artifact ZIP 即得到完整安装 EXE。最终用户无需另行下载 Flutter 或 Visual C++ 运行库。
+
 `packaging/windows/setup.iss` 定义安装流程；`scripts/package-windows.ps1` 调用固定版本 Inno Setup 6.7.3，生成安装 EXE 与便携 ZIP。依赖只用于构建，不要求用户另外安装。
+
+以下命令供维护者在本地复用已有 Flutter Release 运行目录；GitHub 工作流会自动执行，无需手工补包：
 
 ```powershell
 pwsh -File scripts/copy-windows-runtime.ps1

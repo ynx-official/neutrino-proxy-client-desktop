@@ -142,17 +142,30 @@ jobs:
           flutter config --no-enable-macos-arm64-only
           flutter build macos --release --no-pub --build-name "$APP_VERSION" --build-number "$GITHUB_RUN_NUMBER"
           bash scripts/build-macos-host.sh
-      - name: Package and record artifacts
+      - name: Build complete Windows installer and portable archive
+        if: runner.os == 'Windows'
+        shell: pwsh
+        env:
+          RELEASE_TAG: ${{ steps.metadata.outputs.tag }}
+        run: ./scripts/package-windows.ps1 -Tag $env:RELEASE_TAG -BuildNumber $env:GITHUB_RUN_NUMBER
+      - name: Package macOS application
+        if: runner.os == 'macOS'
+        env:
+          RELEASE_TAG: ${{ steps.metadata.outputs.tag }}
+        run: bash scripts/package-macos.sh "$RELEASE_TAG"
+      - name: Record and verify distribution artifacts
         env:
           RELEASE_TAG: ${{ steps.metadata.outputs.tag }}
           BUILD_PLATFORM: ${{ matrix.platform }}
-        run: |
-          if [ "$RUNNER_OS" = Windows ]; then
-            pwsh -File scripts/package-windows.ps1 -Tag "$RELEASE_TAG" -BuildNumber "$GITHUB_RUN_NUMBER"
-          else
-            bash scripts/package-macos.sh "$RELEASE_TAG"
-          fi
-          python scripts/release.py record --tag "$RELEASE_TAG" --commit "$(git rev-parse HEAD)" --build-number "$GITHUB_RUN_NUMBER" --platform "$BUILD_PLATFORM"
+        run: python scripts/release.py record --tag "$RELEASE_TAG" --commit "$(git rev-parse HEAD)" --build-number "$GITHUB_RUN_NUMBER" --platform "$BUILD_PLATFORM"
+      - name: Upload Windows installer for direct download
+        if: runner.os == 'Windows'
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows-x64-installer
+          path: release-assets/neutrino-proxy-client-desktop-${{ steps.metadata.outputs.tag }}-windows-x64-setup.exe
+          if-no-files-found: error
+          retention-days: 14
       - uses: actions/upload-artifact@v4
         with:
           name: desktop-${{ matrix.platform }}

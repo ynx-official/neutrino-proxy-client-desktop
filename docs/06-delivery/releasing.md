@@ -22,6 +22,10 @@
 | `.github/workflows/build.yml` | workflow_call | 固定 Flutter 3.47.5，锁定依赖，格式/analyze/test，Windows/macOS 构建与校验 |
 | `.github/workflows/release.yml` | 推送 `v*` tag | 等待两端通过，验证所有产物，生成校验清单，创建草稿并上传后自动公开 |
 
+用户进一步澄清，安装包要求针对 Flutter 仓库的 GitHub 工作流。Windows 作业编译完整运行目录、补齐 Visual C++ 运行库，再执行 `Build complete Windows installer and portable archive`，自动生成安装 EXE 和便携 ZIP；任一步失败则作业失败。CI 与 tag 发布共用这些步骤。
+
+每次成功构建在 Actions 的 Artifacts 区域提供 `windows-x64-installer`，其中只包含完整的 `*-windows-x64-setup.exe`。GitHub 下载 artifact 时外层为 ZIP，解压后运行安装 EXE。`desktop-windows-x64` 仍包含安装 EXE、便携 ZIP 和构建记录，供 Release 工作流汇总；`desktop-macos-universal` 包含 macOS 分发文件与记录。普通 CI 不创建 Release，本地 `flutter build windows` 不增加安装器构建钩子。
+
 Windows 使用 `windows-2022`；macOS 的 Dart worker 分别使用 `macos-15-intel` 和 `macos-15` 原生编译。桌面构建收集两个 worker，Flutter 和 Swift 宿主仍构建通用版。打包检查这两个 worker 各自架构，其余 Mach-O 必须包含 `x86_64` 和 `arm64`；不能直接 lipo 合并 Dart AOT 文件。macOS 组装后运行 `codesign --verify --deep --strict`、ZIP 校验和 `hdiutil verify`。CI 构建不需要同级 Java 仓库存在。
 
 2026-10-16 后台进程改造同步更新了此构建链；先前成功的单进程 CI 不能作为新架构通过证据。默认 Windows 校验新增 worker 真进程、DPAPI、托盘状态和崩溃清理测试；发布完整性检查要求宿主、worker、UI 三个 EXE 及第三方许可。首次正式发布的测试跳过范围见上述授权记录。

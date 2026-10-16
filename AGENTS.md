@@ -35,4 +35,5 @@
 - 本次工作流配置不包含创建 tag；后续提交、推送和创建 tag 仍需用户明确授权。
 - 2026-10-16 用户追加授权“正式发版，跳过测试”：发布本次 Flutter 客户端改造为 `v0.1.0`，允许提交、推送并创建 tag；仅本次发布跳过测试，保留构建与产物完整性检查，后续版本默认恢复测试。
 - 同日用户要求 Windows 改为安装包：为 v0.1.0 补充安装 EXE 并接入后续发布流程；复用已发布程序，保留便携 ZIP 和 macOS 包，不移动已发布 tag。安装器默认当前用户安装，卸载保留配置；详见 `docs/06-delivery/windows-installer.md`。
+- 用户随后澄清，要求的是 Flutter 仓库的 GitHub Actions 工作流：CI 与 tag 构建均自动生成完整 Windows 安装 EXE，并提供独立的 `windows-x64-installer` artifact；本地 `flutter build` 不增加安装器钩子。
 - 发布只用内置 `GITHUB_TOKEN`，不配置商业签名或公证；macOS 使用工程现有 ad-hoc 签名。缓存、SDK、构建目录和用户凭证不得提交。

@@ -24,6 +24,8 @@ Neutrino Proxy 的 Windows / macOS 桌面客户端。使用 Flutter + Dart，内
 
 从 [Releases](https://github.com/ynx-official/neutrino-proxy-client-desktop/releases) 下载正式版；普通提交的验证包位于 [Actions](https://github.com/ynx-official/neutrino-proxy-client-desktop/actions) 对应运行的 Artifacts。
 
+在 GitHub Actions 下载 Windows 安装包：打开成功的 CI 运行 → **Artifacts → `windows-x64-installer`**。解压 GitHub 下载的 artifact ZIP 后，双击其中的 `*-windows-x64-setup.exe` 即可安装；该 EXE 已包含完整程序、运行库与资源。工作流自动完成打包，无需在本地执行打包命令。
+
 | 平台 | 文件 | 使用方法 |
 | --- | --- | --- |
 | Windows 10/11 x64（推荐） | `*-windows-x64-setup.exe` | 双击安装，支持简体中文、安装目录、开始菜单、可选桌面快捷方式和卸载入口 |
@@ -91,7 +93,7 @@ python scripts/verify-background.py --cycles 0 --samples 60
 
 ## 自动打包与发布
 
-- `main` 提交、Pull Request 和手动 CI：两端格式检查、静态分析、测试、Release 构建与打包，上传 Actions 验证产物。
+- `main` 提交、Pull Request 和手动 CI：两端格式检查、静态分析、测试、Release 构建与打包；Windows 自动生成完整安装 EXE 并单独上传 `windows-x64-installer`，两端完整分发文件保存在 `desktop-*` artifacts。
 - 推送 `vX.Y.Z` tag：注入版本号，构建 Windows 安装 EXE/便携 ZIP 和 macOS 通用 ZIP/DMG，验证四份分发包、来源提交和 SHA-256，再自动公开 GitHub Release。
 - `vX.Y.Z-alpha.N`、`vX.Y.Z-beta.N`、`vX.Y.Z-rc.N`：相同检查，发布为预发行版，不更新 Latest。
 - 非法 `v*` tag 会失败；任一平台失败、缺包或哈希不匹配都不会公开 Release。
