@@ -5,6 +5,7 @@ import hashlib
 import json
 from pathlib import Path
 import re
+import subprocess
 import zipfile
 
 
@@ -49,17 +50,22 @@ def metadata(tag, build_number):
 def expected_assets(tag, platform=None):
     parse_tag(tag)
     assets = {
-        "windows-x64": [f"{PREFIX}-{tag}-windows-x64.zip"],
+        "windows-x64": [f"{PREFIX}-{tag}-windows-x64.zip",
+                        f"{PREFIX}-{tag}-windows-x64-setup.exe"],
         "macos-universal": [f"{PREFIX}-{tag}-macos-universal.zip",
                             f"{PREFIX}-{tag}-macos-universal.dmg"],
     }
     return assets[platform] if platform else [name for group in assets.values() for name in group]
 
 
-def package_windows(source, output, tag):
+def validate_windows_bundle(source):
     for name in WINDOWS_REQUIRED:
         if not (source / name).is_file() or (source / name).stat().st_size == 0:
             raise ValueError(f"Missing or empty Windows runtime file: {name}")
+
+
+def package_windows(source, output, tag):
+    validate_windows_bundle(source)
     output.mkdir(parents=True, exist_ok=True)
     archive = output / expected_assets(tag, "windows-x64")[0]
     if archive.resolve().is_relative_to(source.resolve()):
@@ -72,6 +78,28 @@ def package_windows(source, output, tag):
         if bundle.testzip() is not None:
             raise ValueError("Windows ZIP integrity check failed")
     return archive
+
+
+def package_windows_installer(source, output, tag, build_number, compiler):
+    details = metadata(tag, build_number)
+    source, output = source.resolve(), output.resolve()
+    validate_windows_bundle(source)
+    if output.is_relative_to(source):
+        raise ValueError("Installer output must be outside the runtime directory")
+    if compiler is None or not compiler.is_file():
+        raise ValueError("Inno Setup compiler is required; use scripts/package-windows.ps1")
+    output.mkdir(parents=True, exist_ok=True)
+    script = Path(__file__).resolve().parents[1] / 'packaging/windows/setup.iss'
+    subprocess.run([
+        str(compiler.resolve()), '/Qp', f'/DBundleDir={source}', f'/DOutputDir={output}',
+        f'/DReleaseTag={tag}', f'/DAppVersion={details["version"]}',
+        f'/DBuildNumber={details["build_number"]}', str(script),
+    ], check=True)
+    installer = output / expected_assets(tag, 'windows-x64')[1]
+    with installer.open('rb') as binary:
+        if binary.read(2) != b'MZ':
+            raise ValueError('Installer is not a Windows executable')
+    return installer
 
 
 def asset_info(path):
@@ -93,9 +121,9 @@ def record(output, tag, commit, build_number, platform):
 
 def assemble(output, tag, commit, build_number):
     expected = metadata(tag, build_number) | {"commit": commit}
-    actual_names = {p.name for p in output.iterdir() if p.suffix in (".zip", ".dmg")}
+    actual_names = {p.name for p in output.iterdir() if p.suffix in (".zip", ".dmg", ".exe")}
     if actual_names != set(expected_assets(tag)):
-        raise ValueError("Release requires exactly the Windows ZIP and macOS ZIP/DMG for this tag")
+        raise ValueError("Release requires exactly the Windows installer/ZIP and macOS ZIP/DMG for this tag")
     assets = []
     for platform in ("windows-x64", "macos-universal"):
         path = output / f"{platform}.json"
@@ -117,7 +145,7 @@ def assemble(output, tag, commit, build_number):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("command", choices=("metadata", "windows", "record", "assemble"))
+    parser.add_argument("command", choices=("metadata", "windows", "installer", "record", "assemble"))
     parser.add_argument("--tag", default="")
     parser.add_argument("--build-number", default="1")
     parser.add_argument("--commit")
@@ -125,6 +153,7 @@ def main():
     parser.add_argument("--source", type=Path, default=Path("build/windows/x64/runner/Release"))
     parser.add_argument("--output", type=Path, default=Path("release-assets"))
     parser.add_argument("--github-output", type=Path)
+    parser.add_argument("--iscc", type=Path)
     args = parser.parse_args()
     tag = args.tag
     if not tag:
@@ -142,6 +171,8 @@ def main():
             print(json.dumps(details))
         elif args.command == "windows":
             print(package_windows(args.source, args.output, tag))
+        elif args.command == "installer":
+            print(package_windows_installer(args.source, args.output, tag, args.build_number, args.iscc))
         else:
             if not args.commit:
                 parser.error("--commit is required")

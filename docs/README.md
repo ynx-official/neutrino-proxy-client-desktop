@@ -13,6 +13,7 @@
 - [验证记录](04-quality/verification.md)
 - [TLS 测试证书](04-quality/tls-fixtures.md)
 - [自动打包与发布](06-delivery/releasing.md)
+- [Windows 安装包](06-delivery/windows-installer.md)
 - [发布说明模板](06-delivery/release-notes-template.md)
 - [v0.1.0 正式版本说明](06-delivery/releases/v0.1.0.md)
 - 历史依据：[原架构提案](99-archive/background-process-proposal.md)、[原实施计划](99-archive/background-process-plan-proposal.md)

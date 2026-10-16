@@ -58,12 +58,12 @@ jobs:
           cp "$notes" "$RUNNER_TEMP/release-notes.md"
           # Upload into a draft first. Any upload failure leaves it unpublished.
           # Existing releases are never overwritten, including incomplete drafts.
-          gh release create "$RELEASE_TAG" release-assets/*.zip release-assets/*.dmg \
+          gh release create "$RELEASE_TAG" release-assets/*-setup.exe release-assets/*.zip release-assets/*.dmg \
             release-assets/SHA256SUMS release-assets/release-manifest.json \
             --verify-tag --target "$(git rev-parse HEAD)" --draft \
             --title "Neutrino Desktop $RELEASE_TAG" \
             --notes-file "$RUNNER_TEMP/release-notes.md" --generate-notes "${extra[@]}"
-          gh release view "$RELEASE_TAG" --json assets --jq '.assets | length' | grep -qx 5
+          gh release view "$RELEASE_TAG" --json assets --jq '.assets | length' | grep -qx 6
           if [ "$PRERELEASE" = true ]; then
             gh release edit "$RELEASE_TAG" --draft=false --prerelease --latest=false
           else

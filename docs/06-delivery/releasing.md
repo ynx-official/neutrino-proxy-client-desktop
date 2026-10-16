@@ -12,6 +12,8 @@
 
 2026-10-16 用户进一步明确授权“正式发版，跳过测试”，本次版本为 `v0.1.0`。此授权包括提交当前 Flutter 客户端改造、推送 main 和创建发布 tag。此次 tag 构建以 `skip_tests: true` 跳过测试、分析与测试证书生成，仍保留正常编译、原生签名、包结构和哈希校验。该例外仅绑定 `v0.1.0`，后续版本默认运行测试。main 推送携带 `[skip tests]` 时也可显式跳过该次 CI 测试，PR 与其他提交仍按默认流程运行；发布 tag 的测试策略由 release 工作流单独决定。版本专属说明优先读取 `docs/06-delivery/releases/<tag>.md`，无专属说明时使用模板。
 
+同日用户要求 Windows 改为安装包：增加 Inno Setup 安装 EXE，便携 ZIP 继续保留。为现有 v0.1.0 追加安装包时复用已发布 ZIP 的原始程序，不移动 tag、不替换原 ZIP 或 macOS 包；仅增加安装 EXE 并更新说明和校验清单。新增资产记录其打包提交与输入 ZIP 的 SHA-256，区分原程序构建来源和后补的安装脚本来源。具体约定见 [Windows 安装包](windows-installer.md)。
+
 ## 工作流
 
 | 文件 | 触发 | 职责 |
@@ -37,20 +39,21 @@ Windows 使用 `windows-2022`；macOS 的 Dart worker 分别使用 `macos-15-int
 
 ## 必需产物
 
-1. `neutrino-proxy-client-desktop-<tag>-windows-x64.zip`：完整运行目录，保留 EXE、全部运行 DLL、资源和 AOT 数据，从 Visual Studio Redist 目录补齐 x64 Visual C++ 运行库，排除调试符号。
-2. `neutrino-proxy-client-desktop-<tag>-macos-universal.zip`：完整 `.app`，保留 macOS 资源、权限和链接。
-3. `neutrino-proxy-client-desktop-<tag>-macos-universal.dmg`：应用及 Applications 链接。
-4. `SHA256SUMS`：三份分发包的 SHA-256。
-5. `release-manifest.json`：tag、原生版本、构建号、完整 Git SHA、文件名、大小与 SHA-256。
+1. `neutrino-proxy-client-desktop-<tag>-windows-x64-setup.exe`：当前用户安装向导，包含完整 Windows 运行目录、快捷方式及卸载入口。
+2. `neutrino-proxy-client-desktop-<tag>-windows-x64.zip`：便携运行目录，保留 EXE、全部运行 DLL、资源和 AOT 数据，从 Visual Studio Redist 目录补齐 x64 Visual C++ 运行库，排除调试符号。
+3. `neutrino-proxy-client-desktop-<tag>-macos-universal.zip`：完整 `.app`，保留 macOS 资源、权限和链接。
+4. `neutrino-proxy-client-desktop-<tag>-macos-universal.dmg`：应用及 Applications 链接。
+5. `SHA256SUMS`：四份分发包的 SHA-256。
+6. `release-manifest.json`：tag、原生版本、构建号、完整 Git SHA、文件名、大小与 SHA-256。
 
-两端分别生成构建记录；汇总重新计算文件大小和哈希，并核对 tag、构建号和 Git SHA。缺少产物、混入其他 ZIP/DMG 或内容被改变都会失败。发布不上传测试私钥、开发 SDK、缓存或用户配置。
+两端分别生成构建记录；汇总重新计算文件大小和哈希，并核对 tag、构建号和 Git SHA。缺少安装 EXE 或其他产物、混入其他 EXE/ZIP/DMG 或内容被改变都会失败。发布不上传测试私钥、开发 SDK、缓存或用户配置。
 
 ## 操作与失败恢复
 
 1. 查看目标提交的 CI，检查两端均成功；确认本次更新内容和验证边界。
 2. 需要特定版本说明时，先更新发布说明模板，再提交代码。
 3. 在待发布提交创建并推送 tag。完整命令见根 README。
-4. 查看 Release workflow。首次创建时先为草稿，上传五份产物且核对数量后自动公开；预发行版不更新 Latest。
+4. 查看 Release workflow。首次创建时先为草稿，上传六份产物且核对数量后自动公开；预发行版不更新 Latest。
 5. 下载后运行 `sha256sum -c SHA256SUMS`，macOS 可用 `shasum -a 256 -c SHA256SUMS`；Windows 可用 `Get-FileHash <文件路径> -Algorithm SHA256` 对照清单。
 
 构建阶段失败：先查看失败日志。临时网络问题可重跑失败作业；代码问题应修复后发布新 tag，避免移动已发布 tag。完整重跑与失败作业重跑都使用原运行构建号。

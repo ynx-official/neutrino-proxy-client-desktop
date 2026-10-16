@@ -148,7 +148,7 @@ jobs:
           BUILD_PLATFORM: ${{ matrix.platform }}
         run: |
           if [ "$RUNNER_OS" = Windows ]; then
-            python scripts/release.py windows --tag "$RELEASE_TAG"
+            pwsh -File scripts/package-windows.ps1 -Tag "$RELEASE_TAG" -BuildNumber "$GITHUB_RUN_NUMBER"
           else
             bash scripts/package-macos.sh "$RELEASE_TAG"
           fi

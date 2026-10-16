@@ -22,11 +22,12 @@ Neutrino Proxy 的 Windows / macOS 桌面客户端。使用 Flutter + Dart，内
 
 ## 下载与使用
 
-从 [Releases](https://github.com/ynx-official/neutrino-proxy-client-desktop/releases) 选择版本。首次推送有效版本 tag 且工作流成功后才会出现安装包；普通提交的验证包位于 [Actions](https://github.com/ynx-official/neutrino-proxy-client-desktop/actions) 对应运行的 Artifacts。
+从 [Releases](https://github.com/ynx-official/neutrino-proxy-client-desktop/releases) 下载正式版；普通提交的验证包位于 [Actions](https://github.com/ynx-official/neutrino-proxy-client-desktop/actions) 对应运行的 Artifacts。
 
 | 平台 | 文件 | 使用方法 |
 | --- | --- | --- |
-| Windows 10/11 x64 | `*-windows-x64.zip` | 完整解压，运行 `Neutrino/neutrino_proxy_client_desktop.exe`，保留同目录 DLL 与 `data/` |
+| Windows 10/11 x64（推荐） | `*-windows-x64-setup.exe` | 双击安装，支持简体中文、安装目录、开始菜单、可选桌面快捷方式和卸载入口 |
+| Windows 便携版 | `*-windows-x64.zip` | 完整解压，运行 `Neutrino/neutrino_proxy_client_desktop.exe`，保留同目录 DLL 与 `data/` |
 | macOS 12+，Intel / Apple Silicon | `*-macos-universal.dmg` | 打开磁盘映像，将 `Neutrino.app` 拖到 Applications |
 | macOS 便携分发 | `*-macos-universal.zip` | 解压得到 `Neutrino.app` |
 
@@ -38,6 +39,8 @@ Windows 包未配置商业代码签名；macOS 使用无需证书的 ad-hoc 签�
 4. 在既有管理后台配置端口映射。通过日志页排查连接问题，通过托盘的“退出”完整关闭客户端。
 
 默认启用 TLS、端口为 `9002`、重连间隔为 10 秒；实际值以你的服务端为准。非默认 Netty 帧布局会阻止导入；Java 线程池参数不能直接对应 Dart isolate。
+
+Windows 安装包默认安装到当前用户的 `%LOCALAPPDATA%\Programs\Neutrino Proxy`，无需管理员权限。升级或卸载前从托盘“退出应用”；卸载保留连接配置与凭证。安装方式和打包维护见 [Windows 安装包](docs/06-delivery/windows-installer.md)。
 
 ## 本地开发
 
@@ -72,6 +75,8 @@ flutter build windows --release --no-pub
 
 构建结果位于 `build/windows/x64/runner/Release/` 或 `build/macos/Build/Products/Release/Neutrino.app`。Windows 运行包必须包含整个 Release 目录，不能只复制 EXE；对外分发前运行 `pwsh -File scripts/copy-windows-runtime.ps1` 补齐 Visual C++ 运行库，CI 会自动完成。
 
+Windows 构建和运行库补齐后，运行 `pwsh -File scripts/package-windows.ps1 -Tag v0.1.0 -BuildNumber 1` 生成安装 EXE 和便携 ZIP；脚本在 `.tools/` 准备固定版本的 Inno Setup，不修改全局 PATH。
+
 Windows 构建会自动编译原生宿主和独立 Dart worker。当前宿主通信入口按 Release 验证；不再将 `flutter run` 作为完整应用启动方式，UI 开发先使用 widget tests。macOS 组装脚本在本机只编译当前架构 worker；通用发布包需要 CI 两个原生架构的 worker。新 macOS 宿主尚未实机验收，不能沿用旧单进程版本的 CI 结论。
 
 无弹窗的 Windows 本地验收：
@@ -87,7 +92,7 @@ python scripts/verify-background.py --cycles 0 --samples 60
 ## 自动打包与发布
 
 - `main` 提交、Pull Request 和手动 CI：两端格式检查、静态分析、测试、Release 构建与打包，上传 Actions 验证产物。
-- 推送 `vX.Y.Z` tag：注入版本号，构建 Windows x64 和 macOS 通用版，验证三份分发包、来源提交和 SHA-256，再自动公开 GitHub Release。
+- 推送 `vX.Y.Z` tag：注入版本号，构建 Windows 安装 EXE/便携 ZIP 和 macOS 通用 ZIP/DMG，验证四份分发包、来源提交和 SHA-256，再自动公开 GitHub Release。
 - `vX.Y.Z-alpha.N`、`vX.Y.Z-beta.N`、`vX.Y.Z-rc.N`：相同检查，发布为预发行版，不更新 Latest。
 - 非法 `v*` tag 会失败；任一平台失败、缺包或哈希不匹配都不会公开 Release。
 

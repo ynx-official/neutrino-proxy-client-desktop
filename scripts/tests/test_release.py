@@ -15,6 +15,25 @@ spec.loader.exec_module(release)
 
 
 class ReleaseTests(unittest.TestCase):
+    def test_windows_release_requires_installer_and_portable_archive(self):
+        self.assertEqual(release.expected_assets('v0.1.1', 'windows-x64'), [
+            'neutrino-proxy-client-desktop-v0.1.1-windows-x64.zip',
+            'neutrino-proxy-client-desktop-v0.1.1-windows-x64-setup.exe',
+        ])
+
+    def test_missing_or_tampered_installer_blocks_release(self):
+        for failure in ('missing', 'tampered'):
+            with self.subTest(failure=failure), tempfile.TemporaryDirectory() as temp:
+                root = Path(temp)
+                self.seed_artifacts(root)
+                installer = root / 'neutrino-proxy-client-desktop-v0.1.0-windows-x64-setup.exe'
+                if failure == 'missing':
+                    installer.unlink(missing_ok=True)
+                else:
+                    installer.write_bytes(b'tampered')
+                with self.assertRaises(ValueError):
+                    release.assemble(root, 'v0.1.0', 'a' * 40, '1')
+
     def test_background_binaries_are_required_for_windows_release(self):
         for missing in ('neutrino_proxy_host.exe', 'neutrino_worker.exe'):
             with self.subTest(missing=missing), tempfile.TemporaryDirectory() as temp:
@@ -80,12 +99,12 @@ class ReleaseTests(unittest.TestCase):
             release.assemble(root, "v0.1.0", "a" * 40, "1")
             manifest = json.loads((root / "release-manifest.json").read_text())
             self.assertEqual(manifest["commit"], "a" * 40)
-            self.assertEqual(len(manifest["assets"]), 3)
+            self.assertEqual(len(manifest["assets"]), 4)
             checksum = hashlib.sha256(b"build-output").hexdigest()
-            self.assertEqual((root / "SHA256SUMS").read_text().count(checksum), 3)
+            self.assertEqual((root / "SHA256SUMS").read_text().count(checksum), 4)
 
     def test_missing_tampered_or_mixed_commit_outputs_are_rejected(self):
-        for failure in ("missing", "tampered", "wrong-commit", "extra"):
+        for failure in ("missing", "tampered", "wrong-commit", "extra", "extra-installer"):
             with self.subTest(failure=failure), tempfile.TemporaryDirectory() as temp:
                 root = Path(temp)
                 self.seed_artifacts(root)
@@ -96,6 +115,8 @@ class ReleaseTests(unittest.TestCase):
                     path.write_bytes(b"tampered")
                 elif failure == "extra":
                     (root / "old-release.zip").write_bytes(b"old")
+                elif failure == "extra-installer":
+                    (root / "old-setup.exe").write_bytes(b"old")
                 else:
                     release.record(root, "v0.1.0", "b" * 40, "1", "windows-x64")
                 with self.assertRaises(ValueError):

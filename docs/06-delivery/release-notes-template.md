@@ -2,7 +2,7 @@ Neutrino Proxy 的 Flutter / Dart 桌面客户端，提供连接配置、TLS、T
 
 ## 下载
 
-- Windows x64：完整解压 `windows-x64.zip`，运行 `Neutrino/neutrino_proxy_client_desktop.exe`，不要单独移动 EXE。
+- Windows x64：推荐双击 `windows-x64-setup.exe` 安装，支持安装目录、快捷方式和卸载；便携版仍可解压 `windows-x64.zip` 使用。
 - macOS Intel / Apple Silicon：使用 `macos-universal.dmg`，将 Neutrino 拖入 Applications；也提供完整 `.app` ZIP。
 - `SHA256SUMS` 和 `release-manifest.json` 用于核对下载完整性、版本和来源提交。
 
