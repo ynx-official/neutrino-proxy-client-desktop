@@ -8,7 +8,7 @@
 
 `test/fixtures/tls/` 仅用于回环地址上的真实 TLS 测试：`ca.pem` 是测试信任根，`server.pem` 是测试 CA 签发的 localhost 服务端证书，`server-key.pem` 是公开的测试私钥。三者都不能用于实际服务部署，Flutter 资产清单不会包含它们。测试 CA 私钥只存在于生成过程的临时目录，完成后删除。
 
-刷新命令：`python scripts/generate-test-certificates.py`。需要 OpenSSL；Windows 会优先从 PATH 查找，再尝试 Git for Windows 的附带版本。该命令只修改上述三个测试文件，不修改应用内置 JKS、用户证书或系统信任库。CI 每次测试前自动刷新，开发者刷新后不必为了重新生成随机测试密钥而提交文件。
+刷新命令：`python scripts/generate-test-certificates.py`。使用 OpenSSL 3；Windows 会优先从 PATH 查找，再尝试 Git for Windows 的附带版本。macOS CI 显式选用 Homebrew `openssl@3`；本地可用环境变量 `OPENSSL` 指定其可执行文件路径。该命令只修改上述三个测试文件，不修改应用内置 JKS、用户证书或系统信任库。CI 每次测试前自动刷新，开发者刷新后不必为了重新生成随机测试密钥而提交文件。
 
 测试根使用 RSA 2048/SHA-256；服务端证书有效期 365 天、`CA:FALSE`、`serverAuth` EKU、DNS SAN 为 `localhost`。保留 IP 地址 `127.0.0.1` 的名称不匹配反例，不能通过接受任意证书使测试通过。
 

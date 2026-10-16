@@ -40,6 +40,13 @@ jobs:
         run: python scripts/release.py metadata --tag "$RELEASE_TAG" --build-number "$GITHUB_RUN_NUMBER" --github-output "$GITHUB_OUTPUT"
       - name: Test release safeguards
         run: python -m unittest discover -s scripts/tests -v
+      - name: Select OpenSSL 3 on macOS
+        if: runner.os == 'macOS'
+        run: |
+          if ! brew list --versions openssl@3 >/dev/null 2>&1; then
+            brew install openssl@3
+          fi
+          echo "OPENSSL=$(brew --prefix openssl@3)/bin/openssl" >> "$GITHUB_ENV"
       - name: Generate fresh local TLS test certificates
         run: python scripts/generate-test-certificates.py
       - uses: subosito/flutter-action@v2

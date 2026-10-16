@@ -9,7 +9,7 @@ import tempfile
 
 
 def main():
-    openssl = shutil.which("openssl")
+    openssl = os.environ.get("OPENSSL") or shutil.which("openssl")
     if openssl is None and os.name == "nt":
         candidate = Path(os.environ.get("ProgramFiles", "C:/Program Files")) / "Git/usr/bin/openssl.exe"
         if candidate.is_file():
@@ -27,6 +27,8 @@ def main():
             "basicConstraints=critical,CA:FALSE\n"
             "keyUsage=critical,digitalSignature,keyEncipherment\n"
             "extendedKeyUsage=serverAuth\n"
+            "subjectKeyIdentifier=hash\n"
+            "authorityKeyIdentifier=keyid,issuer\n"
             "subjectAltName=DNS:localhost\n", encoding="ascii")
 
         def run(*args):
@@ -43,6 +45,7 @@ def main():
             "-days", "3650", "-subj", "/CN=Neutrino Local Test CA",
             "-addext", "basicConstraints=critical,CA:TRUE",
             "-addext", "keyUsage=critical,keyCertSign,cRLSign",
+            "-addext", "subjectKeyIdentifier=hash",
             "-keyout", ca_key, "-out", output / "ca.pem")
         run("req", "-new", "-newkey", "rsa:2048", "-nodes", "-sha256",
             "-subj", "/CN=localhost", "-keyout", output / "server-key.pem",
