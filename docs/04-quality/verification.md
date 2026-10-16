@@ -20,9 +20,22 @@ Windows，本机存在 Visual Studio Build Tools 2022 C++ 工具链。Flutter 3.
 
 2026-10-16 仓库发布准备：完整执行 `flutter analyze --no-pub` 无问题、25 项 `flutter test --no-pub --reporter expanded` 全部通过、25 个 Dart 文件格式检查通过、6 项 Python 发布脚本测试通过、actionlint 1.7.12 和 Bash 脚本语法检查通过。发布脚本测试覆盖 tag 校验、Windows 运行文件完整性、缺包、混入其他提交产物和哈希篡改。
 
-同轮在 `.tools/release-verification/` 独立源码副本中锁定依赖，执行 Windows Release 构建（`--build-name 0.1.0 --build-number 1`）成功，并打包验证 ZIP。本机缺少 Developer Mode 符号链接支持，使用已有 `prepare-windows-links.ps1` 创建项目内目录联接后完成构建；补齐 x64 Visual C++ 运行库。未停止或覆盖正在运行的客户端。本轮尚未创建 tag 或公开 Release；GitHub macOS 构建结果另行记录。
+同轮在 `.tools/release-verification/` 独立源码副本中锁定依赖，执行 Windows Release 构建（`--build-name 0.1.0 --build-number 1`）成功，并打包验证 ZIP。本机缺少 Developer Mode 符号链接支持，使用已有 `prepare-windows-links.ps1` 创建项目内目录联接后完成构建；补齐 x64 Visual C++ 运行库。未停止或覆盖正在运行的客户端。本轮未创建 tag 或公开 Release；GitHub 构建结果见下节。
 
-Java 源码静态核对及本地模拟对端测试不等同于完整真实服务端兼容验收。用户反馈的连接成功单独记录，不作为自动化验收结果。macOS 构建、原生图标显示和长期资源测试未执行。为保留用户当前连接，本次不重启正在运行的客户端；透明图标文件预览不冒充系统托盘截图。
+Java 源码静态核对及本地模拟对端测试不等同于完整真实服务端兼容验收。用户反馈的连接成功单独记录，不作为自动化验收结果。macOS 原生界面、图标显示、系统凭证存取和长期资源测试未执行。为保留用户当前连接，本次不重启正在运行的客户端；透明图标文件预览不冒充系统托盘截图。
+
+## GitHub 双平台构建验证
+
+2026-10-16，[CI #5](https://github.com/ynx-official/neutrino-proxy-client-desktop/actions/runs/38846924261) 整体成功，验证提交 `662cb0393ee192e7ace26eeb3cc0bf9a1fd47be6`。工作区同期正在进行的后台进程改造未纳入该提交，也不属于这次通过的范围。
+
+- Windows x64 / macOS universal 均通过格式检查、静态分析、全部 26 项 Flutter 测试和 6 项发布脚本测试。
+- Windows Release 构建成功，补齐 Visual C++ x64 运行库，生成并上传完整 ZIP。
+- macOS Release 构建成功；所有 Mach-O 文件验证包含 `x86_64` / `arm64`，ad-hoc 签名严格校验通过，ZIP 完整性与 DMG 校验通过。产物上传到该运行的 `desktop-macos-universal` artifact。
+- 下载该运行的两组真实产物，在本地执行 `release.py assemble`，按版本 `v0.1.0`、构建号 `5` 和上述完整 Git SHA 汇总通过，生成 `SHA256SUMS` 和 `release-manifest.json`。此版本号为 CI 基础版本，不代表已经创建同名 tag 或 Release。
+
+失败定位和修复：原 localhost 测试证书有效期 10 年且缺少 serverAuth EKU，macOS 真实握手报 `CERTIFICATE_VERIFY_FAILED`。补充直接握手回归测试与失败状态断言，改用测试 CA 签发的 365 天服务端证书；macOS CI 明确使用 OpenSSL 3，生成时显式指定密钥标识并校验证书链，详见 [TLS 测试证书](tls-fixtures.md)。未跳过 TLS 测试或修改生产证书校验规则。
+
+tag 触发与 GitHub Release 公开步骤未在本轮实际执行；其余共享构建、打包和产物汇总已通过以上实测。Actions 验证包保存 14 天，正式分发需由维护者明确推送版本 tag。
 
 ## 后台内存基线
 
