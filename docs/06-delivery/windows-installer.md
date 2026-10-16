@@ -38,3 +38,5 @@ pwsh -File scripts/package-windows.ps1 -Tag v0.1.0 -BuildNumber 1
 v0.1.0 安装包使用已发布 Windows ZIP，下载后确认 SHA-256 为 `cd06fedd5fd5b8ef4a966ab1abe6a1b515af00867401d0006d58b60232705795`。Inno Setup 编译成功，生成版本为 0.1.0.1 的 Windows 安装 EXE。程序文件和既有下载保持不变。
 
 沿用本次发布“跳过测试”的要求：未执行安装、覆盖升级、卸载和应用运行测试；新补的发布完整性回归用例保留给后续默认 CI，本次未运行。编译通过不代表上述流程已实机验收。
+
+工作流接入后，[GitHub CI 运行 38858948194](https://github.com/ynx-official/neutrino-proxy-client-desktop/actions/runs/38858948194) 已全部成功，源码提交为 `ae14b6168d52b787292116307afca8b45fae7ac0`，构建号为 7。独立 `windows-x64-installer` artifact 下载后仅含一个完整安装 EXE，大小 13,404,870 字节，文件版本 0.1.0.7，SHA-256 为 `c3b26334fc6f646f94e54c0dc1a860bb304597206408f4a04f57973c005cbc49`。下载文件与云端构建记录及 `desktop-windows-x64` 中的安装器哈希一致，便携运行包的必需文件也已核对。本次 CI 按要求跳过测试，未运行安装器；这里只确认云端编译、打包、上传与下载完整性。
