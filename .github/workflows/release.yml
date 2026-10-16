@@ -1,0 +1,66 @@
+name: Release
+
+on:
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  build:
+    uses: ./.github/workflows/build.yml
+    with:
+      tag: ${{ github.ref_name }}
+
+  publish:
+    needs: build
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    permissions:
+      contents: write
+    env:
+      RELEASE_TAG: ${{ github.ref_name }}
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: desktop-*
+          path: release-assets
+          merge-multiple: true
+      - name: Verify all artifacts and generate SHA256SUMS
+        id: metadata
+        run: |
+          python scripts/release.py metadata --tag "$RELEASE_TAG" --build-number "$GITHUB_RUN_NUMBER" --github-output "$GITHUB_OUTPUT"
+          python scripts/release.py assemble --tag "$RELEASE_TAG" --commit "$(git rev-parse HEAD)" --build-number "$GITHUB_RUN_NUMBER"
+      - name: Publish complete release
+        env:
+          PRERELEASE: ${{ steps.metadata.outputs.prerelease }}
+        run: |
+          set -euo pipefail
+          extra=()
+          if [ "$PRERELEASE" = true ]; then extra+=(--prerelease); fi
+          cp docs/06-delivery/release-notes-template.md "$RUNNER_TEMP/release-notes.md"
+          # Upload into a draft first. Any upload failure leaves it unpublished.
+          # Existing releases are never overwritten, including incomplete drafts.
+          gh release create "$RELEASE_TAG" release-assets/*.zip release-assets/*.dmg \
+            release-assets/SHA256SUMS release-assets/release-manifest.json \
+            --verify-tag --target "$(git rev-parse HEAD)" --draft \
+            --title "Neutrino Desktop $RELEASE_TAG" \
+            --notes-file "$RUNNER_TEMP/release-notes.md" --generate-notes "${extra[@]}"
+          gh release view "$RELEASE_TAG" --json assets --jq '.assets | length' | grep -qx 5
+          if [ "$PRERELEASE" = true ]; then
+            gh release edit "$RELEASE_TAG" --draft=false --prerelease --latest=false
+          else
+            gh release edit "$RELEASE_TAG" --draft=false --latest
+          fi

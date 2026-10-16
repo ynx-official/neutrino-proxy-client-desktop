@@ -1,0 +1,90 @@
+name: Desktop build
+
+on:
+  workflow_call:
+    inputs:
+      tag:
+        type: string
+        default: ''
+
+permissions:
+  contents: read
+
+jobs:
+  desktop:
+    name: ${{ matrix.platform }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: windows-2022
+            platform: windows-x64
+          - os: macos-15
+            platform: macos-universal
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 45
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Validate release metadata
+        id: metadata
+        env:
+          RELEASE_TAG: ${{ inputs.tag }}
+        run: python scripts/release.py metadata --tag "$RELEASE_TAG" --build-number "$GITHUB_RUN_NUMBER" --github-output "$GITHUB_OUTPUT"
+      - name: Test release safeguards
+        run: python -m unittest discover -s scripts/tests -v
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.47.5'
+          channel: stable
+          cache: true
+      - name: Resolve locked dependencies
+        run: flutter pub get --enforce-lockfile
+      - name: Format, analyze and test
+        run: |
+          dart format --output=none --set-exit-if-changed lib test
+          flutter analyze --no-pub
+          flutter test --no-pub --reporter expanded
+      - name: Build Windows runtime bundle
+        if: runner.os == 'Windows'
+        env:
+          APP_VERSION: ${{ steps.metadata.outputs.version }}
+        run: flutter build windows --release --no-pub --build-name "$APP_VERSION" --build-number "$GITHUB_RUN_NUMBER"
+      - name: Include Visual C++ runtime
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: ./scripts/copy-windows-runtime.ps1
+      - name: Build universal macOS app with ad-hoc signing
+        if: runner.os == 'macOS'
+        env:
+          APP_VERSION: ${{ steps.metadata.outputs.version }}
+          FLUTTER_XCODE_CODE_SIGN_IDENTITY: '-'
+          FLUTTER_XCODE_CODE_SIGN_STYLE: Manual
+          FLUTTER_XCODE_DEVELOPMENT_TEAM: ''
+        run: |
+          flutter config --no-enable-macos-arm64-only
+          flutter build macos --release --no-pub --build-name "$APP_VERSION" --build-number "$GITHUB_RUN_NUMBER"
+      - name: Package and record artifacts
+        env:
+          RELEASE_TAG: ${{ steps.metadata.outputs.tag }}
+          BUILD_PLATFORM: ${{ matrix.platform }}
+        run: |
+          if [ "$RUNNER_OS" = Windows ]; then
+            python scripts/release.py windows --tag "$RELEASE_TAG"
+          else
+            bash scripts/package-macos.sh "$RELEASE_TAG"
+          fi
+          python scripts/release.py record --tag "$RELEASE_TAG" --commit "$(git rev-parse HEAD)" --build-number "$GITHUB_RUN_NUMBER" --platform "$BUILD_PLATFORM"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: desktop-${{ matrix.platform }}
+          path: release-assets/
+          if-no-files-found: error
+          retention-days: 14
