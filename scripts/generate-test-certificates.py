@@ -4,6 +4,7 @@ from pathlib import Path
 import os
 import shutil
 import subprocess
+import sys
 import tempfile
 
 
@@ -29,7 +30,14 @@ def main():
             "subjectAltName=DNS:localhost\n", encoding="ascii")
 
         def run(*args):
-            subprocess.run([openssl, *map(str, args)], check=True, capture_output=True)
+            result = subprocess.run(
+                [openssl, *map(str, args)], capture_output=True, text=True)
+            if result.returncode:
+                print(result.stdout, file=sys.stderr)
+                print(result.stderr, file=sys.stderr)
+                result.check_returncode()
+
+        subprocess.run([openssl, "version"], check=True)
 
         run("req", "-x509", "-newkey", "rsa:2048", "-nodes", "-sha256",
             "-days", "3650", "-subj", "/CN=Neutrino Local Test CA",

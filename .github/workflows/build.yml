@@ -40,6 +40,8 @@ jobs:
         run: python scripts/release.py metadata --tag "$RELEASE_TAG" --build-number "$GITHUB_RUN_NUMBER" --github-output "$GITHUB_OUTPUT"
       - name: Test release safeguards
         run: python -m unittest discover -s scripts/tests -v
+      - name: Generate fresh local TLS test certificates
+        run: python scripts/generate-test-certificates.py
       - uses: subosito/flutter-action@v2
         with:
           flutter-version: '3.47.5'
@@ -47,8 +49,6 @@ jobs:
           cache: true
       - name: Resolve locked dependencies
         run: flutter pub get --enforce-lockfile
-      - name: Generate fresh local TLS test certificates
-        run: python scripts/generate-test-certificates.py
       - name: Format, analyze and test
         run: |
           dart format --output=none --set-exit-if-changed lib test
