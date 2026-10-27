@@ -30,6 +30,26 @@ pub trait AutoStart {
 
 pub const STARTUP_NAME: &str = "Neutrino Proxy";
 
+#[cfg(windows)]
+fn complete_windows_registration(name: &str, executable: &std::path::Path) -> Result<(), String> {
+    windows_registry::CURRENT_USER
+        .create(r"SOFTWARE\Microsoft\Windows\CurrentVersion\Run")
+        .and_then(|key| key.set_string(name, format!("\"{}\"", executable.display())))
+        .map_err(|e| e.to_string())?;
+    // The plugin prefers HKLM when elevated and leaves HKCU's Task Manager
+    // override untouched. Restore approval for the quoted current-user entry too.
+    windows_registry::CURRENT_USER
+        .create(r"SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\StartupApproved\Run")
+        .and_then(|key| {
+            key.set_bytes(
+                name,
+                windows_registry::Type::Bytes,
+                &[2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            )
+        })
+        .map_err(|e| e.to_string())
+}
+
 pub struct SystemAutoStart<'a> {
     manager: &'a tauri_plugin_autostart::AutoLaunchManager,
     #[cfg(windows)]
@@ -63,18 +83,11 @@ impl AutoStart for SystemAutoStart<'_> {
         if enabled {
             // auto-launch 0.6 writes the executable unquoted. Complete registration
             // with a quoted path so installations under Program Files launch correctly.
-            let quoted = (|| -> Result<(), String> {
+            let registration = (|| -> Result<(), String> {
                 let executable = std::env::current_exe().map_err(|e| e.to_string())?;
-                windows_registry::CURRENT_USER
-                    .options()
-                    .write()
-                    .open(r"SOFTWARE\Microsoft\Windows\CurrentVersion\Run")
-                    .and_then(|key| {
-                        key.set_string(self.name, format!("\"{}\"", executable.display()))
-                    })
-                    .map_err(|e| e.to_string())
+                complete_windows_registration(self.name, &executable)
             })();
-            if quoted.is_err() {
+            if registration.is_err() {
                 let _ = self.manager.disable();
                 return Err("无法完成开机自启注册，请检查系统权限后重试".into());
             }
@@ -322,6 +335,60 @@ mod tests {
 
     #[cfg(windows)]
     #[test]
+    fn windows_registration_clears_current_user_disable_after_system_registration() {
+        use tauri_plugin_autostart::ManagerExt;
+        const RUN: &str = r"SOFTWARE\Microsoft\Windows\CurrentVersion\Run";
+        const APPROVAL: &str =
+            r"SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\StartupApproved\Run";
+        let name = format!("Neutrino registration test {}", uuid::Uuid::new_v4());
+        struct Cleanup<'a>(&'a str);
+        impl Drop for Cleanup<'_> {
+            fn drop(&mut self) {
+                for path in [RUN, APPROVAL] {
+                    if let Ok(key) = windows_registry::CURRENT_USER.options().write().open(path) {
+                        let _ = key.remove_value(self.0);
+                    }
+                }
+            }
+        }
+        let _cleanup = Cleanup(&name);
+        let app = tauri::test::mock_builder()
+            .plugin(
+                tauri_plugin_autostart::Builder::new()
+                    .app_name(&name)
+                    .build(),
+            )
+            .build(tauri::test::mock_context(tauri::test::noop_assets()))
+            .unwrap();
+        let run = windows_registry::CURRENT_USER.create(RUN).unwrap();
+        let approval = windows_registry::CURRENT_USER.create(APPROVAL).unwrap();
+        let executable = std::path::Path::new(r"C:\Program Files\Neutrino Proxy\client.exe");
+        run.set_string(&name, format!("\"{}\"", executable.display()))
+            .unwrap();
+        approval
+            .set_bytes(
+                &name,
+                windows_registry::Type::Bytes,
+                &[3, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0],
+            )
+            .unwrap();
+        let manager = app.autolaunch();
+        assert!(!manager.is_enabled().unwrap());
+        // Elevated registration refreshes HKLM only; this final step must also
+        // restore the current user's approval independently of process privileges.
+        complete_windows_registration(&name, executable).unwrap();
+        assert!(
+            manager.is_enabled().unwrap(),
+            "current-user Task Manager disable must be cleared when enabling startup"
+        );
+        assert_eq!(
+            run.get_string(&name).unwrap(),
+            format!("\"{}\"", executable.display())
+        );
+    }
+
+    #[cfg(windows)]
+    #[test]
     fn windows_plugin_registers_and_removes_an_isolated_login_entry() {
         use tauri_plugin_autostart::ManagerExt;
         let name = format!("Neutrino settings test {}", uuid::Uuid::new_v4());
@@ -344,12 +411,13 @@ mod tests {
         impl Drop for Cleanup<'_> {
             fn drop(&mut self) {
                 let _ = self.0.disable();
-                if let Ok(key) = windows_registry::CURRENT_USER
-                    .options()
-                    .write()
-                    .open(APPROVAL)
-                {
-                    let _ = key.remove_value(self.1);
+                for root in [
+                    windows_registry::CURRENT_USER,
+                    windows_registry::LOCAL_MACHINE,
+                ] {
+                    if let Ok(key) = root.options().write().open(APPROVAL) {
+                        let _ = key.remove_value(self.1);
+                    }
                 }
             }
         }

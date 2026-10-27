@@ -5,6 +5,21 @@
 
 关联文档：[总体方案](../00-project/client-app-proposal.md)、[界面设计](../02-design/client-app-ui.md)、[架构设计](../03-architecture/client-app-architecture.md)、[完整验收计划](../04-quality/client-app-acceptance.md)、[本地运行](../05-operations/client-app-local-development.md)
 
+## 2026-10-27 Windows CI 自启恢复修复
+
+[独立仓库 CI](https://github.com/ynx-official/neutrino-proxy-client-desktop/actions/runs/40440501075) 的两个 macOS 构建成功，Windows 在“任务管理器禁用后重新启用开机自启”的真实插件测试失败。已核对锁定的 auto-launch 0.6.0 源码：插件默认优先注册系统启动项，有管理员权限时只重置系统的 StartupApproved，当前用户的禁用标记仍然存在；本机无系统注册表写权限，因此原用例此前通过。
+
+Windows 注册收尾现在同时写入带引号的当前用户启动命令及启用标记；注册失败继续返回错误并撤销启动注册。补充无需管理员权限的回归用例，使用唯一测试名和真实注册表，先模拟当前用户禁用状态，再核对注册收尾可以恢复插件查询结果并保留含空格路径的引号。该用例在修复前实际失败，修复后通过；原真实插件测试保留，测试清理覆盖当前用户与系统中的同名测试批准项。
+
+本轮本机 Windows 验证：Rust 70 项、Vue 17 项、Python 发布回归 13 项、Playwright / Edge 12 项通过；Cargo 格式与 Clippy 通过。浏览器开发服务器已停止，1420 端口无监听。未修改依赖、锁文件或 CI 测试开关，未操作用户实际自启项、连接配置或凭证。
+
+Windows Release / NSIS 构建和独立打包通过，便携 ZIP 解包后的可执行文件与本次构建逐字节一致，且仅包含可执行文件及 LICENSE。本地产物在 `release-assets/`，未上传或发布：
+
+- 安装包：`neutrino-proxy-client-desktop-0.1.0-windows-x64-setup.exe`，3203392 字节，SHA-256 `e68a1126fd8ae18cf26def65a03e289f87131d21baeee0640d31560f2f8b6c05`。
+- 便携包：`neutrino-proxy-client-desktop-0.1.0-windows-x64-portable.zip`，4443588 字节，SHA-256 `d5c824ad58fe7696d3ce6b90010573c1f8a87430cd72129b3c5211c71c3e78e3`。
+
+本节记录本机验证；修订后的远端三平台结果以对应提交的 Actions 为准。系统实际登录启动、安装器安装、macOS 原生交互及长期稳定性仍需分别验收。
+
 ## 2026-10-27 独立仓库迁移
 
 桌面项目已完整迁到本仓库根目录，包名及可执行文件改为 neutrino-proxy-client-desktop，工作流与主仓库分离。本轮完整证据见[拆分记录](project-extraction.md)，构建与发版见[独立发布](releasing.md)。下方历史路径、主仓库 tag 和产物哈希保留原始语境，不代表当前可执行文件路径或独立仓库发布结果。
