@@ -42,9 +42,7 @@
 
 ## 🖼 界面预览
 
-以下为 Windows 版 v1.0.0 的界面截图。连接页直接展示，其他页面可点击三角图标展开查看。
-
-截图中的服务器地址、客户端 ID 和 License 信息已遮盖。
+以下为 Windows 版 v1.0.0 的界面截图，服务器地址、客户端 ID 和 License 信息已遮盖。
 
 ### 🔌 连接状态
 
@@ -54,8 +52,7 @@
   <img src="assets/client-connected.png" width="860" alt="连接页：连接状态、连接时长、SSL 状态及最近事件">
 </p>
 
-<details>
-<summary>📋 <strong>连接日志</strong></summary>
+### 📋 连接日志
 
 搜索日志、按级别筛选、暂停视图更新或导出日志，便于查看连接、认证和后台运行过程。
 
@@ -63,12 +60,7 @@
   <img src="assets/client-logs.png" width="860" alt="日志页：搜索、级别筛选、暂停更新与导出日志">
 </p>
 
-</details>
-
-<br/>
-
-<details>
-<summary>⚙️ <strong>连接配置与高级设置</strong></summary>
+### ⚙️ 连接配置与高级设置
 
 填写服务器地址、连接端口和 License，按服务端要求选择 SSL。展开高级设置后，可调整客户端 ID、重连间隔、心跳间隔、读取超时和 UDP 端口范围；修改后可仅保存，或保存并重连。
 
@@ -76,12 +68,7 @@
   <img src="assets/client-connection-settings.png" width="860" alt="连接配置：服务器、端口、License、SSL 及展开的高级设置">
 </p>
 
-</details>
-
-<br/>
-
-<details>
-<summary>🚀 <strong>应用设置</strong></summary>
+### 🚀 应用设置
 
 开机自启和启动后自动连接可分别开启，更改后自动保存。截图展示两项均已开启的状态，首次使用时两项默认关闭。
 
@@ -89,12 +76,7 @@
   <img src="assets/client-application-settings.png" width="860" alt="应用设置：开机自启、启动后自动连接及自动保存提示">
 </p>
 
-</details>
-
-<br/>
-
-<details>
-<summary>🧭 <strong>系统托盘图标</strong></summary>
+### 🧭 系统托盘图标
 
 应用运行时可在系统托盘中找到图标，鼠标悬停可查看当前连接状态。关闭主窗口后，应用仍可通过托盘访问。
 
@@ -102,20 +84,13 @@
   <img src="assets/client-tray-icon.png" width="860" alt="Windows 系统托盘中的 Neutrino 图标及已连接提示">
 </p>
 
-</details>
-
-<br/>
-
-<details>
-<summary>📌 <strong>原生托盘菜单</strong></summary>
+### 📌 原生托盘菜单
 
 在托盘菜单中查看连接状态与服务器摘要，也可打开主窗口、查看日志、断开连接或退出应用。
 
 <p align="center">
   <img src="assets/client-tray-menu.png" width="860" alt="原生托盘菜单：连接状态、打开主窗口、查看日志、断开连接和退出应用">
 </p>
-
-</details>
 
 <br/>
 
@@ -150,12 +125,7 @@ Windows 版本未签名，macOS 版本未公证。下载后可使用同一版本
 
 端口映射在 Neutrino Proxy 服务端管理后台配置。
 
-### 使用示例
-
-> 点击三角图标展开操作说明。
-
-<details>
-<summary>🔌 <strong>手动填写连接配置</strong></summary>
+### 🔌 手动填写连接配置
 
 | 配置项 | 如何填写 |
 | --- | --- |
@@ -168,20 +138,13 @@ Windows 版本未签名，macOS 版本未公证。下载后可使用同一版本
 
 连接后修改配置时，可选择「仅保存，下次生效」保留当前连接，或选择「保存并重连」立即应用。
 
-</details>
-
-<br/>
-
-<details>
-<summary>📥 <strong>导入已有 YAML 配置</strong></summary>
+### 📥 导入已有 YAML 配置
 
 1. 在设置页点击「导入配置」，选择已有的客户端 YAML 文件。
 2. 检查预览中的连接参数，确认后保存。
 3. 补齐缺少的连接信息，再点击「保存并连接」。
 
 已有配置或导入文件中明确指定的 SSL 开关按原值读取。
-
-</details>
 
 <br/>
 
@@ -212,30 +175,17 @@ Windows 版本未签名，macOS 版本未公证。下载后可使用同一版本
 
 ## ❓ 常见问题
 
-<details>
-<summary>连接失败怎么办？</summary>
+### 连接失败怎么办？
 
 检查服务器地址、连接端口、License 和 SSL 开关是否与服务端配置一致，再到「日志」页查看具体报错。地址中不要带协议或路径。
 
-</details>
-
-<br/>
-
-<details>
-<summary>显示已连接，但访问不到服务？</summary>
+### 显示已连接，但访问不到服务？
 
 到服务端管理后台检查端口映射，并确认被映射的本地服务已经启动。
 
-</details>
-
-<br/>
-
-<details>
-<summary>更新后打开的还是旧版本？</summary>
+### 更新后打开的还是旧版本？
 
 先从托盘选择「退出应用」，再启动新版本。仅关闭主窗口会保留旧进程。
-
-</details>
 
 <br/>
 
@@ -257,8 +207,7 @@ Windows 版本未签名，macOS 版本未公证。下载后可使用同一版本
 
 配置和使用细节见[本地运行与配置](docs/05-operations/client-app-local-development.md)，其他资料见[文档索引](docs/README.md)。
 
-<details>
-<summary>从源码运行与构建</summary>
+### 从源码运行与构建
 
 技术栈为 Rust + Tauri 2 + Vue 3。开发需要 Node.js 22.12+、Rust stable 和对应平台的构建工具。
 
@@ -270,8 +219,6 @@ cargo run
 ```
 
 环境准备和测试命令见[本地开发文档](docs/05-operations/client-app-local-development.md)，安装包构建与版本发布见[发布说明](docs/06-delivery/releasing.md)。
-
-</details>
 
 <br/>
 
