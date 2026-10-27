@@ -6,51 +6,84 @@
 [![Release](https://github.com/ynx-official/neutrino-proxy-client-desktop/actions/workflows/release.yml/badge.svg)](https://github.com/ynx-official/neutrino-proxy-client-desktop/actions/workflows/release.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 
-Neutrino Proxy 的 Windows / macOS 桌面客户端。采用 Rust + Tokio 网络内核、Tauri 2 桌面宿主、Vue 3 + JavaScript 界面，提供连接配置、状态、日志和系统托盘，适合在后台保持隧道连接。安装后无需 Java、Node.js 或 Rust 工具链；Windows 使用系统 WebView2。
+[Neutrino Proxy](https://github.com/ynx-official/neutrino-proxy) 的 Windows / macOS 桌面客户端。通过图形界面管理连接、查看状态与日志，关闭窗口后也能在系统托盘中继续运行。安装后无需单独配置 Java、Node.js 或 Rust 环境。
 
-本仓库独立维护桌面客户端；服务端、命令行客户端和端口映射使用 [Neutrino Proxy](https://github.com/ynx-official/neutrino-proxy)。桌面客户端独立构建、测试和发布，版本与服务端分开管理。
+使用前需要准备可用的 Neutrino Proxy 服务端，以及服务端提供的连接地址、端口和 License。端口映射在服务端管理后台配置。
 
-## 功能
+## 主要功能
 
-- 服务器、端口、License、SSL 配置，连接、断开及自动重连。
-- TCP / UDP 转发、写缓冲水位线、读写空闲检测、心跳和连接状态。
-- 导入 Java 客户端 YAML，预览实际读取字段并确认保存；支持同目录旧 clientId 迁移。
-- 内置信任库及自定义 JKS / PEM / DER，TLS 与 Java 行为对齐，保留信任和握手签名验证；边界见[兼容性说明](docs/03-architecture/client-app-java-compatibility.md)。
-- License、证书口令保存在系统安全存储，普通配置与凭证分离。
-- 连接、日志、设置三页；关闭主窗口释放界面，Rust 内核与原生托盘继续工作，可恢复窗口或退出。
-- 开机自启、启动后自动连接，默认关闭、自动保存；配置完整时启动尝试一次，初始失败停止，成功后保留断线重连。
-- 有条数上限的日志，支持搜索、筛选、暂停视图和导出。
+- 支持 TCP / UDP 转发，可手动连接、断开，并在断线后自动重连。
+- 导入已有 Java 客户端 YAML 配置，预览并确认后保存。
+- 关闭窗口后保持后台运行，通过托盘查看状态、恢复窗口或退出。
+- 按需开启开机自启和启动后自动连接。
+- 搜索、筛选、暂停查看或导出日志，方便排查连接问题。
+- License 和证书口令保存在系统安全存储中。
 
-## 下载与使用
+## 下载与安装
 
-正式版本从 [Releases](https://github.com/ynx-official/neutrino-proxy-client-desktop/releases) 下载；尚未发布正式版本时，可从 [Actions](https://github.com/ynx-official/neutrino-proxy-client-desktop/actions) 成功运行的 Artifacts 下载验证包。
+前往 [Releases 下载最新版本](https://github.com/ynx-official/neutrino-proxy-client-desktop/releases/latest)，根据自己的系统选择文件：
 
-Windows 安装包：成功的 CI 运行 → **Artifacts → `windows-x64-installer`**。解压 artifact ZIP，运行其中的 `*-windows-x64-setup.exe`。完整分发包位于 `desktop-windows-x64`、`desktop-macos-x64`、`desktop-macos-arm64`。
-
-| 平台 | 文件 | 使用方法 |
+| 系统 | 下载文件 | 安装方式 |
 | --- | --- | --- |
-| Windows x64 安装版 | `*-windows-x64-setup.exe` | 双击安装，安装器按需安装 WebView2 |
-| Windows x64 便携版 | `*-windows-x64-portable.zip` | 完整解压后运行 `neutrino-proxy-client-desktop.exe`，需有 WebView2 |
-| Intel Mac | `*-macos-x64.dmg` | 打开镜像，将 Neutrino Proxy 拖到 Applications |
-| Apple Silicon Mac | `*-macos-arm64.dmg` | 下载对应 ARM64 镜像并安装 |
+| Windows x64 安装版 | `*-windows-x64-setup.exe` | 双击安装，安装器会按需安装 WebView2 |
+| Windows x64 便携版 | `*-windows-x64-portable.zip` | 完整解压后运行 `neutrino-proxy-client-desktop.exe`，系统需已安装 WebView2 |
+| Intel Mac | `*-macos-x64.dmg` | 打开 DMG，将 Neutrino Proxy 拖入 Applications |
+| Apple Silicon Mac（M 系列芯片） | `*-macos-arm64.dmg` | 下载 ARM64 版本，打开 DMG 后拖入 Applications |
 
-Windows 未配置开发者签名，macOS 使用 ad-hoc 签名、未公证。下载后用 `SHA256SUMS` 核对文件；平台实际验收范围见[开发记录](docs/06-delivery/client-app-development-status.md)。
+Windows 版本未签名，macOS 版本未公证。下载后可使用同一版本附件中的 `SHA256SUMS` 核对文件。
 
-1. 进入「设置 → 连接配置」，填写域名 / IP、隧道端口、License，SSL 与服务端一致；地址不包含协议或路径。
-2. 按需导入旧配置、选择信任证书，然后「保存并连接」。仅保存的修改在下次连接生效。
-3. 在既有管理后台配置端口映射，通过日志页排查连接问题。
-4. 「设置 → 应用设置」可开启开机自启及启动后自动连接；修改自动保存，自动连接在下次进程启动时生效。
-5. 关闭窗口后仍在托盘运行，使用「退出应用」完整关闭；升级前先退出旧进程。
+## 第一次连接
 
-新配置默认关闭 SSL、端口 `9002`、重连间隔 10 秒，SSL 与端口应按实际服务端设置选择；已有配置及导入中明确指定的 SSL 开关按原值读取。应用标识为 `fun.neutrino.proxy.desktop`，配置与凭证分开存储。移动便携程序后，应关闭再开启开机自启，以更新系统注册路径。
+先准备以下连接信息，具体值以服务端配置为准：
 
-## 本地开发
+| 配置项 | 如何填写 |
+| --- | --- |
+| 服务器地址 | 服务端域名或 IP，不包含 `http://`、`https://` 或路径 |
+| 端口 | 服务端提供的客户端连接端口，不是要映射的本地服务端口 |
+| License | 服务端分配的 License |
+| SSL | 新配置默认关闭；服务端要求加密连接时开启，端口也需与之匹配 |
 
-依赖以 `package-lock.json` 和 `Cargo.lock` 为准，需要 Node.js 22.12+、npm、Rust stable（1.90+）及平台工具。
+1. 打开应用，进入「设置 → 连接配置」。
+2. 填写连接信息；启用 SSL 后，可按需使用内置证书或选择自定义信任证书。
+3. 点击「保存并连接」，在连接页查看状态，显示「已连接」后即可按服务端配置使用映射服务。
 
-- Windows：C++ Build Tools、Windows SDK、WebView2。
-- macOS：Xcode Command Line Tools，只能在 macOS 构建对应平台应用。
-- Python 3.11+：用于发布脚本与打包测试，不是应用运行依赖。
+如果已有 YAML 配置，点击「导入配置」，检查预览后确认保存，再点击「保存并连接」。缺少的连接信息仍需补齐。
+
+连接后修改配置时，可选择「仅保存，下次生效」保留当前连接，或选择「保存并重连」立即应用。
+
+## 常用操作
+
+**后台运行与退出**：关闭主窗口后，连接会继续保持。通过系统托盘可查看状态、打开主窗口或日志；需要完全结束运行时，选择「退出应用」。
+
+**开机自启与自动连接**：在「设置 → 应用设置」中按需开启：
+
+- **开机自启**：登录系统后自动启动应用。
+- **启动后自动连接**：应用启动时，在已保存配置完整的情况下尝试连接。
+
+这两项默认关闭，修改后自动保存。Windows 便携版移动到新目录后，应关闭再开启一次开机自启，以更新启动路径。
+
+**查看连接问题**：进入「日志」页，可搜索、按级别筛选、暂停查看或导出日志。
+
+## 遇到问题
+
+**连接失败怎么办？**
+
+先检查服务器地址、连接端口、License 和 SSL 开关是否与服务端配置一致，再到「日志」页查看具体报错。地址中不要带协议或路径。
+
+**显示已连接，但访问不到服务？**
+
+到服务端管理后台检查端口映射，并确认被映射的本地服务已经启动。
+
+**更新后打开的还是旧版本？**
+
+先从托盘选择「退出应用」，再启动新版本。仅关闭主窗口会保留旧进程。
+
+更多配置和操作说明见[本地运行与配置](docs/05-operations/client-app-local-development.md)，其他资料见[文档索引](docs/README.md)。
+
+<details>
+<summary>开发与构建</summary>
+
+技术栈为 Rust + Tauri 2 + Vue 3。开发需要 Node.js 22.12+、Rust stable 和对应平台的构建工具。
 
 ```sh
 git clone https://github.com/ynx-official/neutrino-proxy-client-desktop.git
@@ -59,54 +92,10 @@ npm ci
 cargo run
 ```
 
-`cargo run` 按需启动 Vite 并打开桌面程序，可复用已有本项目服务；结束开发进程后仅清理本次拥有的服务。也可使用 `npm run desktop:dev`。
+测试和环境准备见[本地开发文档](docs/05-operations/client-app-local-development.md)，安装包构建与版本发布见[发布说明](docs/06-delivery/releasing.md)。
 
-```sh
-npm test
-npm run test:e2e
-cargo fmt --all -- --check
-cargo clippy --workspace --all-targets --locked -- -D warnings
-cargo test --workspace --locked
-python -m unittest discover -s scripts/release -p 'test_*.py' -v
-npm run desktop:build
-```
-
-Windows 可执行文件位于 `target/release/neutrino-proxy-client-desktop.exe`。生成安装包和 DMG 的命令见[发布说明](docs/06-delivery/releasing.md)。构建与测试不要求旁边存在 Java 工程；Java 仅用于可选的协议向量再生成。
-
-## 自动打包与发布
-
-- 分支提交、PR、手动 CI：格式、Clippy、前端 / Rust / 发布脚本测试、Windows 浏览器流程及三个平台的 Release 安装包。
-- 推送 `vX.Y.Z`：同步 npm、Tauri、Rust 和锁文件版本，构建 Windows 安装 EXE / 便携 ZIP、Intel / Apple Silicon DMG；核对四份分发包、三个平台的来源提交及 SHA-256 后自动公开 Release。
-- 带预发布标识的 tag（如 `v0.2.0-rc.1`）发布为 prerelease，不更新 Latest。
-- 平台失败、缺包、来源不一致、哈希不匹配时不公开 Release；已发布版本不覆盖。
-- 手动 Release 可选已有 tag，默认只构建；发布和按次跳过测试需明确选择。构建、格式、Clippy、产物及哈希校验始终执行。
-
-验证并决定发布新版本后，由维护者执行，例如：
-
-```sh
-git tag -a v1.0.1 -m "Neutrino Desktop v1.0.1"
-git push origin v1.0.1
-```
-
-工作流使用 GitHub 提供的 `GITHUB_TOKEN`，不配置开发者签名证书。桌面与服务端独立版本，两个仓库的 tag 不互相触发。详见[发布说明](docs/06-delivery/releasing.md)。
-
-## 目录与文档
-
-```text
-crates/client-core/    Rust + Tokio 协议、TLS、TCP/UDP、连接生命周期
-src-tauri/             Tauri 宿主、原生托盘、系统凭证和应用设置
-src/                   Vue 页面、组件、路由、样式
-tests/                 浏览器流程与本地对端
-scripts/               开发服务器、独立打包与发布校验
-assets/                项目 Logo
-.github/workflows/     CI、复用构建、独立 tag 发布
-docs/                  需求、设计、架构、验证、发布说明
-Cargo.toml             Rust workspace
-package.json           前端与桌面构建命令
-```
-
-更多说明见[文档索引](docs/README.md)。各项验证以文档注明的实际执行范围为准，长期运行、原生交互和 macOS 验收需分别确认。
+</details>
 
 ## 许可证与来源
 
-采用 [MIT License](LICENSE)，保留本项目和 Neutrino Proxy 上游版权声明。品牌、内置公开信任库和 Java 协议依据来自 Neutrino Proxy；协议向量和本地测试证书仅用于兼容验证。完整来源与 TLS 策略见[兼容性说明](docs/03-architecture/client-app-java-compatibility.md)。
+采用 [MIT License](LICENSE)，保留本项目及 Neutrino Proxy 上游版权声明。品牌、公开信任库和协议依据来自 Neutrino Proxy，详见[兼容性说明](docs/03-architecture/client-app-java-compatibility.md)。
