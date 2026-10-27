@@ -1,0 +1,9 @@
+[
+  {"max":26,"offset":3,"width":1,"adjustment":0,"strip":0,"hex":"0000001605000000000000004800000006e8aebfe5aea200ff1f"},
+  {"max":26,"offset":2,"width":2,"adjustment":0,"strip":0,"hex":"0000001605000000000000004800000006e8aebfe5aea200ff1f"},
+  {"max":26,"offset":1,"width":3,"adjustment":0,"strip":0,"hex":"0000001605000000000000004800000006e8aebfe5aea200ff1f"},
+  {"max":26,"offset":0,"width":4,"adjustment":0,"strip":0,"hex":"0000001605000000000000004800000006e8aebfe5aea200ff1f"},
+  {"max":34,"offset":0,"width":8,"adjustment":0,"strip":8,"hex":"000000000000001a0000001605000000000000004800000006e8aebfe5aea200ff1f"},
+  {"max":29,"offset":1,"width":2,"adjustment":-3,"strip":3,"hex":"aa001d0000001605000000000000004800000006e8aebfe5aea200ff1f"},
+  {"max":29,"offset":1,"width":2,"adjustment":3,"strip":3,"hex":"aa00170000001605000000000000004800000006e8aebfe5aea200ff1f"}
+]

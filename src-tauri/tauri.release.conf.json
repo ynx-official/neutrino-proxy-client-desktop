@@ -1,0 +1,12 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "bundle": {
+    "icon": ["../target/release-icons/icon.ico", "../target/release-icons/icon.icns", "../target/release-icons/icon.png"],
+    "windows": {
+      "certificateThumbprint": null
+    },
+    "macOS": {
+      "signingIdentity": "-"
+    }
+  }
+}

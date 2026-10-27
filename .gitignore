@@ -1,0 +1,13 @@
+/target/
+/node_modules/
+/dist/
+/src-tauri/gen/schemas/
+/test-results/
+/playwright-report/
+/.local-test/
+/release-assets/
+/.tools/
+/.idea/
+**/__pycache__/
+.DS_Store
+*.log

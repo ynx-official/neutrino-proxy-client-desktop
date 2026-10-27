@@ -1,0 +1,26 @@
+[package]
+name = "neutrino-client-core"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+bytes = "1"
+chrono = { version = "0.4", default-features = false, features = ["clock", "serde"] }
+futures-util = { version = "0.3", features = ["sink"] }
+jks = { version = "0.3.3", default-features = false }
+rustls = { version = "0.23", default-features = false, features = ["ring", "std", "tls12"] }
+rustls-pemfile = "2"
+rsa = "0.9.10"
+sha2 = { version = "0.10", features = ["oid"] }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+serde_yaml = "0.9"
+thiserror = "2"
+tokio = { version = "1", features = ["rt-multi-thread", "net", "io-util", "sync", "time", "macros"] }
+tokio-rustls = { version = "0.26", default-features = false, features = ["ring", "tls12"] }
+tokio-util = { version = "0.7", features = ["codec", "rt"] }
+uuid = { version = "1", features = ["v4"] }
+
+[dev-dependencies]
+rcgen = "0.13.2"
+

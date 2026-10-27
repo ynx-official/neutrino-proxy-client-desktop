@@ -1,0 +1,6 @@
+{
+  "identifier": "main-window",
+  "description": "Local desktop client interface only",
+  "windows": ["main"],
+  "permissions": ["core:default", "dialog:allow-confirm"]
+}

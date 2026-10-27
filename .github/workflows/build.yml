@@ -1,0 +1,120 @@
+name: Desktop build
+
+on:
+  workflow_call:
+    inputs:
+      tag:
+        type: string
+        default: ''
+      commit:
+        type: string
+        default: ''
+      skip_tests:
+        description: Skip tests for an explicitly requested manual release only
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  desktop:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - runner: windows-2022
+            platform: windows-x64
+            target: x86_64-pc-windows-msvc
+            bundles: nsis
+          - runner: macos-15-intel
+            platform: macos-x64
+            target: x86_64-apple-darwin
+            bundles: dmg
+          - runner: macos-15
+            platform: macos-arm64
+            target: aarch64-apple-darwin
+            bundles: dmg
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 60
+    env:
+      BUILD_PLATFORM: ${{ matrix.platform }}
+      BUILD_TARGET: ${{ matrix.target }}
+      BUILD_BUNDLES: ${{ matrix.bundles }}
+      SKIP_TESTS: ${{ inputs.skip_tests }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.commit }}
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: package-lock.json
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt, clippy
+          targets: ${{ matrix.target }}
+      - uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+          key: ${{ matrix.platform }}-cargo-${{ hashFiles('Cargo.lock') }}
+          restore-keys: ${{ matrix.platform }}-cargo-
+      - name: Select standalone version and record source commit
+        env:
+          RELEASE_TAG: ${{ inputs.tag }}
+        run: |
+          tag="$RELEASE_TAG"
+          if [ -z "$tag" ]; then
+            tag="v$(python -c 'import json; print(json.load(open("package.json"))["version"])')"
+          fi
+          python scripts/release/release.py prepare --tag "$tag"
+          echo "RELEASE_TAG=$tag" >> "$GITHUB_ENV"
+          echo "RELEASE_COMMIT=$(git rev-parse HEAD)" >> "$GITHUB_ENV"
+      - name: Install locked frontend dependencies
+        run: npm ci --no-audit --no-fund
+      - name: Format and Clippy checks
+        run: |
+          cargo fmt --all -- --check
+          cargo clippy --workspace --all-targets --locked -- -D warnings
+      - name: Test packaging, frontend and networking
+        if: ${{ !inputs.skip_tests }}
+        run: |
+          python -m unittest discover -s scripts/release -p 'test_*.py' -v
+          npm test
+          cargo test --workspace --locked
+      - name: Browser regression checks
+        if: ${{ runner.os == 'Windows' && !inputs.skip_tests }}
+        run: npm run test:e2e
+      - name: Generate icons and build platform installer
+        run: |
+          npm run tauri -- icon src-tauri/icons/app-icon.png --output target/release-icons
+          npm run desktop:bundle -- --target "$BUILD_TARGET" --bundles "$BUILD_BUNDLES" -- --locked
+      - name: Package and record standalone outputs
+        run: |
+          python scripts/release/release.py desktop --tag "$RELEASE_TAG" --platform "$BUILD_PLATFORM" --target "$BUILD_TARGET"
+          python scripts/release/release.py record --tag "$RELEASE_TAG" --label "desktop-$BUILD_PLATFORM" --commit "$RELEASE_COMMIT"
+      - name: Upload Windows installer for direct download
+        if: runner.os == 'Windows'
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows-x64-installer
+          path: release-assets/*-windows-x64-setup.exe
+          if-no-files-found: error
+          retention-days: 14
+      - uses: actions/upload-artifact@v4
+        with:
+          name: desktop-${{ matrix.platform }}
+          path: release-assets/
+          if-no-files-found: error
+          retention-days: 14
