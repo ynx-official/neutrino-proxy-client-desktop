@@ -211,6 +211,7 @@ async fn builtin_handshake(
     let config = ClientConfig {
         server: "127.0.0.1".into(),
         port: server.local_addr().unwrap().port(),
+        ssl: true,
         ..Default::default()
     };
     let peer = tokio::spawn(async move {

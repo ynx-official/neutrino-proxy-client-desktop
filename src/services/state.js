@@ -1,7 +1,7 @@
 export const defaultConfig = () => ({
   server: "",
   port: 9002,
-  ssl: true,
+  ssl: false,
   clientId: "",
   reconnectSeconds: 10,
   unlimited: false,

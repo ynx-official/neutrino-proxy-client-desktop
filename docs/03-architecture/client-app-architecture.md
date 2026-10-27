@@ -170,6 +170,8 @@ stateDiagram-v2
 
 原默认 SSL 为开启、端口 9002、重连间隔 10 秒、认证无限重试关闭、写空闲 20 秒、读空闲 120 秒、UDP 端口范围 10000–10500。以[原 app.yml](https://github.com/ynx-official/neutrino-proxy/blob/dev/neutrino-proxy-client/src/main/resources/app.yml)和[配置类](https://github.com/ynx-official/neutrino-proxy/blob/dev/neutrino-proxy-client/src/main/java/org/dromara/neutrinoproxy/client/config/ProxyConfig.java)为事实依据；迁移不能只覆盖界面可见的四个基础字段。
 
+2026-10-27 用户要求桌面客户端默认关闭 SSL：Rust `ClientConfig::default()` 与前端初始配置同步使用 `false`，首次配置及缺失该字段时生效。已保存配置、导入文件中的显式 `true` / `false` 继续按其值读取，用户可手动开启；端口仍默认 9002，需与服务端实际设置匹配。开启 SSL 后沿用下文的证书信任与握手签名规则。
+
 ## 5. TLS 选型的验证门槛
 
 2026-10-26 已完成本轮决策和实现：按用户要求对齐 Java 的无名称验证策略，保持证书信任和握手签名验证；内置 1024 位 RSA JKS 已进行 TLS 1.2/1.3 真实握手回归。完整策略、直接信任证书的有效期语义及算法限制见[七项同步 TLS 决策](client-app-java-compatibility.md#tls-决策与限制)。以下保留原选型的检查依据，不再将名称策略列为待决定事项。

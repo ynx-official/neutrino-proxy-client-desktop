@@ -5,6 +5,16 @@
 
 关联文档：[总体方案](../00-project/client-app-proposal.md)、[界面设计](../02-design/client-app-ui.md)、[架构设计](../03-architecture/client-app-architecture.md)、[完整验收计划](../04-quality/client-app-acceptance.md)、[本地运行](../05-operations/client-app-local-development.md)
 
+## 2026-10-27 默认 SSL 与 v1.0.0 发布准备
+
+用户要求新配置默认关闭 SSL，并授权构建通过后公开正式 `v1.0.0` Release。Rust 默认配置和前端初始配置均改为 `ssl: false`；已有配置或导入中显式指定的 SSL 值继续按其值读取，可手动开启。规则与验收同步到[架构说明](../03-architecture/client-app-architecture.md)、[界面设计](../02-design/client-app-ui.md)、[U35](../04-quality/client-app-acceptance.md)，使用说明见[本地运行](../05-operations/client-app-local-development.md)。
+
+TDD：Rust、组件和首次配置浏览器用例在修改默认值前均因 SSL 仍开启而失败；修改后通过。内置 JKS 握手夹具显式开启 SSL，继续验证 TLS 1.2/1.3、证书信任与伪造握手签名拒绝，不依赖新配置默认值。浏览器替身读取实际前端默认配置，覆盖首次保存仍为 false；组件另验证手动开启并保存 true，以及已保存 true / false 的显示。
+
+本机验证：Rust 71 项、Vue 20 项、Python 发布回归 13 项、Playwright / Edge 12 项通过；Cargo 格式、Clippy 和前端生产构建通过。浏览器首轮应用设置场景整体超时，原用例带 trace 独立复跑及整套复跑均通过，未扩大时限或放宽断言；页面检查确认默认开关关闭、证书区隐藏。
+
+独立目录中执行 `v1.0.0` 版本注入，核对 npm、Tauri、两个 Cargo 包及锁文件均为 1.0.0，外部依赖保持一致。工作树版本文件沿用既有约定，由 tag 构建在 CI 检出中注入。正式发布仍要求三个平台测试、构建、来源提交和哈希校验全部通过；执行结果以[Release](https://github.com/ynx-official/neutrino-proxy-client-desktop/releases/tag/v1.0.0) 的 manifest 与对应 Actions 为准。
+
 ## 2026-10-27 Windows CI 自启恢复修复
 
 [独立仓库 CI](https://github.com/ynx-official/neutrino-proxy-client-desktop/actions/runs/40440501075) 的两个 macOS 构建成功，Windows 在“任务管理器禁用后重新启用开机自启”的真实插件测试失败。已核对锁定的 auto-launch 0.6.0 源码：插件默认优先注册系统启动项，有管理员权限时只重置系统的 StartupApproved，当前用户的禁用标记仍然存在；本机无系统注册表写权限，因此原用例此前通过。

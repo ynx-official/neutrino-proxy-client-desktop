@@ -8,6 +8,7 @@
 - 保持 Tauri 标识 `fun.neutrino.proxy.desktop` 和原 Rust App 的配置/凭证语义，不因仓库或可执行文件重命名迁移用户秘密。
 - Java 兼容边界见 `docs/03-architecture/client-app-java-compatibility.md`；保留用户授权的 TLS 不校验主机名、仍验证信任与握手签名行为。
 - 应用设置默认关闭、自动保存。完整配置在进程启动时尝试连接一次，初始失败停止，成功后保留既有断线重连；托盘恢复不重复触发。
+- 连接配置的 SSL 默认关闭；新配置或缺失该字段时使用关闭，已保存及导入的显式开关值保持不变，用户可手动开启。
 
 ## UI design system
 

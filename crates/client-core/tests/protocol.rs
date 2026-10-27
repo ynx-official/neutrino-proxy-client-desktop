@@ -202,6 +202,21 @@ fn malformed_custom_lengths_fail_without_allocating_unbounded_buffers() {
 }
 
 #[test]
+fn ssl_is_disabled_by_default_and_explicit_choices_are_preserved() {
+    assert!(!ClientConfig::default().ssl);
+    let missing: ClientConfig = serde_json::from_str(r#"{"server":"example.test"}"#).unwrap();
+    assert!(!missing.ssl);
+    for enabled in [true, false] {
+        let saved: ClientConfig =
+            serde_json::from_value(serde_json::json!({"ssl": enabled})).unwrap();
+        assert_eq!(saved.ssl, enabled);
+        let restored: ClientConfig =
+            serde_json::from_str(&serde_json::to_string(&saved).unwrap()).unwrap();
+        assert_eq!(restored.ssl, enabled);
+    }
+}
+
+#[test]
 fn old_saved_configs_receive_java_defaults() {
     let cfg: ClientConfig =
         serde_json::from_str(r#"{"clientId":"existing-id","server":"example.test"}"#).unwrap();

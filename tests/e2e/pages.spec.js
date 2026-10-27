@@ -1,12 +1,14 @@
 import { test, expect } from "@playwright/test";
+import { defaultConfig } from "../../src/services/state.js";
 
 async function bridge(page, connected = false) {
   await page.addInitScript(
-    ({ connected }) => {
+    ({ connected, defaults }) => {
       const config = {
+        ...defaults,
         server: connected ? "edge.example.com" : "",
         port: 9002,
-        ssl: true,
+        ssl: connected ? true : defaults.ssl,
         clientId: "test-client",
         reconnectSeconds: 10,
         unlimited: false,
@@ -107,7 +109,7 @@ async function bridge(page, connected = false) {
         },
       };
     },
-    { connected },
+    { connected, defaults: defaultConfig() },
   );
 }
 
@@ -149,6 +151,8 @@ test("first run validates configuration and navigates after saving", async ({
   await page.goto("/");
   await expect(page.getByRole("heading", { name: "尚未连接" })).toBeVisible();
   await page.getByRole("button", { name: "填写连接信息" }).click();
+  await expect(page.getByRole("switch", { name: "启用 SSL" })).not.toBeChecked();
+  await expect(page.getByText("信任证书", { exact: true })).toBeHidden();
   await page.getByRole("button", { name: "保存并连接" }).click();
   await expect(
     page.getByText("请填写服务器地址", { exact: true }),
@@ -163,6 +167,7 @@ test("first run validates configuration and navigates after saving", async ({
   await expect(
     page.getByRole("heading", { name: "已连接", exact: true }),
   ).toBeVisible();
+  expect(await page.evaluate(() => window.__lastSaved.config.ssl)).toBe(false);
 });
 
 test("protocol import replaces confirmed dirty edits and survives the next save", async ({ page }) => {

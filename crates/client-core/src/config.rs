@@ -27,7 +27,7 @@ impl Default for ClientConfig {
         Self {
             server: String::new(),
             port: 9002,
-            ssl: true,
+            ssl: false,
             client_id: uuid::Uuid::new_v4().simple().to_string(),
             reconnect_seconds: 10,
             unlimited: false,
