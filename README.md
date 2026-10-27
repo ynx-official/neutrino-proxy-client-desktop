@@ -1,87 +1,264 @@
-<p align="center"><img src="assets/logo.png" width="88" alt="Neutrino Logo"></p>
+<!-- Logo -->
+<p align="center">
+  <img src="assets/logo/logo-text-cross.png" width="360" alt="Neutrino Proxy">
+</p>
 
-# Neutrino Proxy Desktop
+<!-- Tagline -->
+<h3 align="center">Neutrino Proxy Desktop · Windows / macOS 桌面客户端</h3>
 
-[![CI](https://github.com/ynx-official/neutrino-proxy-client-desktop/actions/workflows/ci.yml/badge.svg)](https://github.com/ynx-official/neutrino-proxy-client-desktop/actions/workflows/ci.yml)
-[![Release](https://github.com/ynx-official/neutrino-proxy-client-desktop/actions/workflows/release.yml/badge.svg)](https://github.com/ynx-official/neutrino-proxy-client-desktop/actions/workflows/release.yml)
-[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
+<!-- Badges -->
+<p align="center">
+  <a href="https://github.com/ynx-official/neutrino-proxy-client-desktop/releases/latest">
+    <img src="https://img.shields.io/github/v/release/ynx-official/neutrino-proxy-client-desktop?label=version&color=blue" alt="Latest release">
+  </a>
+  <a href="https://github.com/ynx-official/neutrino-proxy-client-desktop/actions/workflows/ci.yml">
+    <img src="https://github.com/ynx-official/neutrino-proxy-client-desktop/actions/workflows/ci.yml/badge.svg" alt="CI">
+  </a>
+  <a href="LICENSE">
+    <img src="https://img.shields.io/badge/License-MIT-green.svg" alt="MIT License">
+  </a>
+  <a href="https://github.com/ynx-official/neutrino-proxy-client-desktop/stargazers">
+    <img src="https://img.shields.io/github/stars/ynx-official/neutrino-proxy-client-desktop?style=social" alt="GitHub stars">
+  </a>
+</p>
 
-[Neutrino Proxy](https://github.com/ynx-official/neutrino-proxy) 的 Windows / macOS 桌面客户端。通过图形界面管理连接、查看状态与日志，关闭窗口后也能在系统托盘中继续运行。安装后无需单独配置 Java、Node.js 或 Rust 环境。
+<br/>
 
-使用前需要准备可用的 Neutrino Proxy 服务端，以及服务端提供的连接地址、端口和 License。端口映射在服务端管理后台配置。
+## 功能特性
 
-## 主要功能
+🔌 **TCP / UDP 转发**，在界面中连接、断开，断线后自动重连
 
-- 支持 TCP / UDP 转发，可手动连接、断开，并在断线后自动重连。
-- 导入已有 Java 客户端 YAML 配置，预览并确认后保存。
-- 关闭窗口后保持后台运行，通过托盘查看状态、恢复窗口或退出。
-- 按需开启开机自启和启动后自动连接。
-- 搜索、筛选、暂停查看或导出日志，方便排查连接问题。
-- License 和证书口令保存在系统安全存储中。
+📥 **导入已有配置**，支持 Java 客户端 YAML，预览确认后保存
 
-## 下载与安装
+🧭 **原生系统托盘**，关闭窗口后继续运行，随时恢复主窗口
 
-前往 [Releases 下载最新版本](https://github.com/ynx-official/neutrino-proxy-client-desktop/releases/latest)，根据自己的系统选择文件：
+🚀 **启动设置**，按需开启开机自启和启动后自动连接
 
-| 系统 | 下载文件 | 安装方式 |
+📋 **连接日志**，支持搜索、筛选、暂停查看和导出
+
+🔐 **凭证保护**，License 与证书口令保存在系统安全存储中
+
+<br/>
+
+## 🖼 界面预览
+
+以下为 Windows 版 v1.0.0 的界面截图。连接页直接展示，其他页面可点击三角图标展开查看。
+
+截图中的服务器地址、客户端 ID 和 License 信息已遮盖。
+
+### 🔌 连接状态
+
+查看当前连接状态、本次连接时长、SSL 状态和最近事件；可进入连接配置或断开当前连接。
+
+<p align="center">
+  <img src="assets/client-connected.png" width="860" alt="连接页：连接状态、连接时长、SSL 状态及最近事件">
+</p>
+
+<details>
+<summary>📋 <strong>连接日志</strong></summary>
+
+搜索日志、按级别筛选、暂停视图更新或导出日志，便于查看连接、认证和后台运行过程。
+
+<p align="center">
+  <img src="assets/client-logs.png" width="860" alt="日志页：搜索、级别筛选、暂停更新与导出日志">
+</p>
+
+</details>
+
+<br/>
+
+<details>
+<summary>⚙️ <strong>连接配置与高级设置</strong></summary>
+
+填写服务器地址、连接端口和 License，按服务端要求选择 SSL。展开高级设置后，可调整客户端 ID、重连间隔、心跳间隔、读取超时和 UDP 端口范围；修改后可仅保存，或保存并重连。
+
+<p align="center">
+  <img src="assets/client-connection-settings.png" width="860" alt="连接配置：服务器、端口、License、SSL 及展开的高级设置">
+</p>
+
+</details>
+
+<br/>
+
+<details>
+<summary>🚀 <strong>应用设置</strong></summary>
+
+开机自启和启动后自动连接可分别开启，更改后自动保存。截图展示两项均已开启的状态，首次使用时两项默认关闭。
+
+<p align="center">
+  <img src="assets/client-application-settings.png" width="860" alt="应用设置：开机自启、启动后自动连接及自动保存提示">
+</p>
+
+</details>
+
+<br/>
+
+<details>
+<summary>🧭 <strong>系统托盘图标</strong></summary>
+
+应用运行时可在系统托盘中找到图标，鼠标悬停可查看当前连接状态。关闭主窗口后，应用仍可通过托盘访问。
+
+<p align="center">
+  <img src="assets/client-tray-icon.png" width="860" alt="Windows 系统托盘中的 Neutrino 图标及已连接提示">
+</p>
+
+</details>
+
+<br/>
+
+<details>
+<summary>📌 <strong>原生托盘菜单</strong></summary>
+
+在托盘菜单中查看连接状态与服务器摘要，也可打开主窗口、查看日志、断开连接或退出应用。
+
+<p align="center">
+  <img src="assets/client-tray-menu.png" width="860" alt="原生托盘菜单：连接状态、打开主窗口、查看日志、断开连接和退出应用">
+</p>
+
+</details>
+
+<br/>
+
+## 🌻 为什么使用桌面客户端
+
+将连接配置、运行状态和日志放在同一个窗口中，日常通过托盘管理连接，需要排查问题时打开日志页。
+
+安装后无需单独配置 Java、Node.js 或 Rust 环境。使用前请准备可用的 [Neutrino Proxy 服务端](https://github.com/ynx-official/neutrino-proxy)，以及服务端提供的地址、连接端口和 License。
+
+<br/>
+
+## 📦 下载与安装
+
+前往 **[Releases 下载最新版本](https://github.com/ynx-official/neutrino-proxy-client-desktop/releases/latest)**，按系统选择对应文件：
+
+| 系统 | 下载文件 | 使用方式 |
 | --- | --- | --- |
 | Windows x64 安装版 | `*-windows-x64-setup.exe` | 双击安装，安装器会按需安装 WebView2 |
-| Windows x64 便携版 | `*-windows-x64-portable.zip` | 完整解压后运行 `neutrino-proxy-client-desktop.exe`，系统需已安装 WebView2 |
-| Intel Mac | `*-macos-x64.dmg` | 打开 DMG，将 Neutrino Proxy 拖入 Applications |
-| Apple Silicon Mac（M 系列芯片） | `*-macos-arm64.dmg` | 下载 ARM64 版本，打开 DMG 后拖入 Applications |
+| Windows x64 便携版 | `*-windows-x64-portable.zip` | 完整解压后运行 `neutrino-proxy-client-desktop.exe`，需已安装 WebView2 |
+| Intel Mac | `*-macos-x64.dmg` | 打开 DMG，将应用拖入 Applications |
+| Apple Silicon Mac（M 系列） | `*-macos-arm64.dmg` | 下载 ARM64 版本，打开 DMG 后拖入 Applications |
 
 Windows 版本未签名，macOS 版本未公证。下载后可使用同一版本附件中的 `SHA256SUMS` 核对文件。
 
-## 第一次连接
+<br/>
 
-先准备以下连接信息，具体值以服务端配置为准：
+## ✨ 开始连接
+
+1. 打开应用，进入「设置 → 连接配置」。
+2. 填写服务器地址、连接端口和 License；**新配置默认关闭 SSL**，按服务端要求选择是否开启。
+3. 点击「保存并连接」，在连接页查看状态。
+
+端口映射在 Neutrino Proxy 服务端管理后台配置。
+
+### 使用示例
+
+> 点击三角图标展开操作说明。
+
+<details>
+<summary>🔌 <strong>手动填写连接配置</strong></summary>
 
 | 配置项 | 如何填写 |
 | --- | --- |
 | 服务器地址 | 服务端域名或 IP，不包含 `http://`、`https://` 或路径 |
-| 端口 | 服务端提供的客户端连接端口，不是要映射的本地服务端口 |
+| 端口 | 服务端提供的客户端连接端口 |
 | License | 服务端分配的 License |
-| SSL | 新配置默认关闭；服务端要求加密连接时开启，端口也需与之匹配 |
+| SSL | 与服务端要求保持一致；开启后可使用内置证书或自定义信任证书 |
 
-1. 打开应用，进入「设置 → 连接配置」。
-2. 填写连接信息；启用 SSL 后，可按需使用内置证书或选择自定义信任证书。
-3. 点击「保存并连接」，在连接页查看状态，显示「已连接」后即可按服务端配置使用映射服务。
-
-如果已有 YAML 配置，点击「导入配置」，检查预览后确认保存，再点击「保存并连接」。缺少的连接信息仍需补齐。
+填写后点击「保存并连接」，等待状态变为「已连接」。
 
 连接后修改配置时，可选择「仅保存，下次生效」保留当前连接，或选择「保存并重连」立即应用。
 
-## 常用操作
+</details>
 
-**后台运行与退出**：关闭主窗口后，连接会继续保持。通过系统托盘可查看状态、打开主窗口或日志；需要完全结束运行时，选择「退出应用」。
+<br/>
 
-**开机自启与自动连接**：在「设置 → 应用设置」中按需开启：
+<details>
+<summary>📥 <strong>导入已有 YAML 配置</strong></summary>
+
+1. 在设置页点击「导入配置」，选择已有的客户端 YAML 文件。
+2. 检查预览中的连接参数，确认后保存。
+3. 补齐缺少的连接信息，再点击「保存并连接」。
+
+已有配置或导入文件中明确指定的 SSL 开关按原值读取。
+
+</details>
+
+<br/>
+
+## 🧭 托盘与后台运行
+
+**关闭主窗口后，应用仍会保持连接并在托盘运行。**
+
+通过托盘菜单可以查看连接状态、打开主窗口或日志。需要完全结束运行时，选择「退出应用」。
+
+<br/>
+
+## 🚀 开机自启与自动连接
+
+进入「设置 → 应用设置」，按需开启：
 
 - **开机自启**：登录系统后自动启动应用。
 - **启动后自动连接**：应用启动时，在已保存配置完整的情况下尝试连接。
 
-这两项默认关闭，修改后自动保存。Windows 便携版移动到新目录后，应关闭再开启一次开机自启，以更新启动路径。
+两项设置默认关闭，修改后自动保存。Windows 便携版移动到新目录后，应关闭再开启一次开机自启，以更新启动路径。
 
-**查看连接问题**：进入「日志」页，可搜索、按级别筛选、暂停查看或导出日志。
+<br/>
 
-## 遇到问题
+## 📋 查看连接日志
 
-**连接失败怎么办？**
+进入「日志」页，搜索关键字或按级别筛选；需要仔细查看时可暂停视图，也可导出日志用于排查。
 
-先检查服务器地址、连接端口、License 和 SSL 开关是否与服务端配置一致，再到「日志」页查看具体报错。地址中不要带协议或路径。
+<br/>
 
-**显示已连接，但访问不到服务？**
+## ❓ 常见问题
+
+<details>
+<summary>连接失败怎么办？</summary>
+
+检查服务器地址、连接端口、License 和 SSL 开关是否与服务端配置一致，再到「日志」页查看具体报错。地址中不要带协议或路径。
+
+</details>
+
+<br/>
+
+<details>
+<summary>显示已连接，但访问不到服务？</summary>
 
 到服务端管理后台检查端口映射，并确认被映射的本地服务已经启动。
 
-**更新后打开的还是旧版本？**
+</details>
+
+<br/>
+
+<details>
+<summary>更新后打开的还是旧版本？</summary>
 
 先从托盘选择「退出应用」，再启动新版本。仅关闭主窗口会保留旧进程。
 
-更多配置和操作说明见[本地运行与配置](docs/05-operations/client-app-local-development.md)，其他资料见[文档索引](docs/README.md)。
+</details>
+
+<br/>
+
+## 💙 反馈与贡献
+
+遇到问题或有建议，欢迎提交 [Issue](https://github.com/ynx-official/neutrino-proxy-client-desktop/issues)。反馈时请附上系统版本、客户端版本和脱敏日志。
+
+欢迎通过 [Pull Request](https://github.com/ynx-official/neutrino-proxy-client-desktop/pulls) 参与改进。
+
+<br/>
+
+## 💖 支持项目
+
+如果这个项目对你有帮助，欢迎点一个 ⭐。
+
+<br/>
+
+## 👨‍💻 开发与文档
+
+配置和使用细节见[本地运行与配置](docs/05-operations/client-app-local-development.md)，其他资料见[文档索引](docs/README.md)。
 
 <details>
-<summary>开发与构建</summary>
+<summary>从源码运行与构建</summary>
 
 技术栈为 Rust + Tauri 2 + Vue 3。开发需要 Node.js 22.12+、Rust stable 和对应平台的构建工具。
 
@@ -92,10 +269,12 @@ npm ci
 cargo run
 ```
 
-测试和环境准备见[本地开发文档](docs/05-operations/client-app-local-development.md)，安装包构建与版本发布见[发布说明](docs/06-delivery/releasing.md)。
+环境准备和测试命令见[本地开发文档](docs/05-operations/client-app-local-development.md)，安装包构建与版本发布见[发布说明](docs/06-delivery/releasing.md)。
 
 </details>
 
-## 许可证与来源
+<br/>
 
-采用 [MIT License](LICENSE)，保留本项目及 Neutrino Proxy 上游版权声明。品牌、公开信任库和协议依据来自 Neutrino Proxy，详见[兼容性说明](docs/03-architecture/client-app-java-compatibility.md)。
+## 🍁 许可证
+
+采用 **[MIT License](LICENSE)**，保留本项目及 Neutrino Proxy 上游版权声明。品牌、公开信任库和协议依据来自 Neutrino Proxy，详见[兼容性说明](docs/03-architecture/client-app-java-compatibility.md)。
