@@ -9,6 +9,7 @@
 
 ## 当前入口
 
+- [v1.0.0 正式发布记录](06-delivery/client-app-development-status.md)：发布时间、来源提交、三平台构建及公开附件校验；[下载 Release](https://github.com/ynx-official/neutrino-proxy-client-desktop/releases/tag/v1.0.0)。
 - [项目拆分与验证](06-delivery/project-extraction.md)：目录、命名、工作流分离及本轮验证边界。
 - [本地开发与运行](05-operations/client-app-local-development.md)：启动、测试、应用设置与构建。
 - [独立构建与发布](06-delivery/releasing.md)：Windows 安装包 / 便携包、两个 macOS 架构、版本、产物完整性及发布保护。

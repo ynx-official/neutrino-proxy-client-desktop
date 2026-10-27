@@ -84,8 +84,8 @@ Windows 可执行文件位于 `target/release/neutrino-proxy-client-desktop.exe`
 验证并决定发布新版本后，由维护者执行，例如：
 
 ```sh
-git tag -a v0.1.1 -m "Neutrino Desktop v0.1.1"
-git push origin v0.1.1
+git tag -a v1.0.1 -m "Neutrino Desktop v1.0.1"
+git push origin v1.0.1
 ```
 
 工作流使用 GitHub 提供的 `GITHUB_TOKEN`，不配置开发者签名证书。桌面与服务端独立版本，两个仓库的 tag 不互相触发。详见[发布说明](docs/06-delivery/releasing.md)。

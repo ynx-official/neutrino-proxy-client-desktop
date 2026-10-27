@@ -19,14 +19,14 @@
 
 ## 分发产物
 
-示例版本 0.1.1；必须齐备以下四份文件，另附 `release-manifest.json` 与 `SHA256SUMS`：
+示例版本 1.0.0；必须齐备以下四份文件，另附 `release-manifest.json` 与 `SHA256SUMS`：
 
 | 文件 | 内容 |
 |---|---|
-| `neutrino-proxy-client-desktop-0.1.1-windows-x64-setup.exe` | Tauri NSIS 安装包，按需安装 WebView2 |
-| `neutrino-proxy-client-desktop-0.1.1-windows-x64-portable.zip` | 可执行文件与 LICENSE，系统需有 WebView2 |
-| `neutrino-proxy-client-desktop-0.1.1-macos-x64.dmg` | Intel Mac 安装镜像 |
-| `neutrino-proxy-client-desktop-0.1.1-macos-arm64.dmg` | Apple Silicon Mac 安装镜像 |
+| `neutrino-proxy-client-desktop-1.0.0-windows-x64-setup.exe` | Tauri NSIS 安装包，按需安装 WebView2 |
+| `neutrino-proxy-client-desktop-1.0.0-windows-x64-portable.zip` | 可执行文件与 LICENSE，系统需有 WebView2 |
+| `neutrino-proxy-client-desktop-1.0.0-macos-x64.dmg` | Intel Mac 安装镜像 |
+| `neutrino-proxy-client-desktop-1.0.0-macos-arm64.dmg` | Apple Silicon Mac 安装镜像 |
 
 Windows 不配置开发者签名；macOS 使用 `-` 身份 ad-hoc 签名、未公证。应用代码签名和隧道 SSL 是独立机制。
 

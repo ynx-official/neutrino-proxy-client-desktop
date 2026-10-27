@@ -5,6 +5,16 @@
 
 关联文档：[总体方案](../00-project/client-app-proposal.md)、[界面设计](../02-design/client-app-ui.md)、[架构设计](../03-architecture/client-app-architecture.md)、[完整验收计划](../04-quality/client-app-acceptance.md)、[本地运行](../05-operations/client-app-local-development.md)
 
+## 2026-10-27 v1.0.0 正式发布
+
+`v1.0.0` 于 2026-10-27 14:12:20（Asia/Shanghai）公开为 Latest 正式版本，[下载页面](https://github.com/ynx-official/neutrino-proxy-client-desktop/releases/tag/v1.0.0)。tag 指向源码提交 `1b744575620122daa652bd3c72cbf62721b80dca`，包含默认关闭 SSL 的修订。
+
+[正式发布工作流](https://github.com/ynx-official/neutrino-proxy-client-desktop/actions/runs/40458319310) 的准备、三个平台构建及发布共 5 个作业成功；测试没有跳过，manifest 的 `tests_skipped=false`。Windows x64 安装 EXE / 便携 ZIP、Intel / Apple Silicon DMG 以及 manifest、SHA256SUMS 共 6 个附件齐备。
+
+下载完整构建归档后，SHA-256 与 GitHub artifact digest 一致；解包后用既有发布脚本复核文件清单、版本、来源提交与校验清单。三个平台记录均为 1.0.0 / 同一源码提交，6 个公开附件的大小与 GitHub digest 逐一一致。Windows 便携可执行文件的 FileVersion / ProductVersion 均实读为 1.0.0，ZIP 只含可执行文件与保留的 LICENSE。完整文件哈希以 Release 的 SHA256SUMS 为准；manifest 本身的 SHA-256 为 `813b3dd3281aeda9db741772e96772f84c10e63acf9cd75f6cd34f08c7e2dfe5`。
+
+本次验收覆盖自动化测试、构建、打包、来源和公开附件完整性；系统实际登录启动、安装器实际安装、macOS 原生交互及长期负载仍按原验收边界分别执行。Windows 未配置开发者签名，macOS ad-hoc、未公证，详见[发布说明](releasing.md)。
+
 ## 2026-10-27 默认 SSL 与 v1.0.0 发布准备
 
 用户要求新配置默认关闭 SSL，并授权构建通过后公开正式 `v1.0.0` Release。Rust 默认配置和前端初始配置均改为 `ssl: false`；已有配置或导入中显式指定的 SSL 值继续按其值读取，可手动开启。规则与验收同步到[架构说明](../03-architecture/client-app-architecture.md)、[界面设计](../02-design/client-app-ui.md)、[U35](../04-quality/client-app-acceptance.md)，使用说明见[本地运行](../05-operations/client-app-local-development.md)。
